@@ -1,8 +1,10 @@
 <?php
+
 declare(strict_types=1);
 
 $finder = PhpCsFixer\Finder::create()
-                           ->in('src');
+                           ->in('src')
+;
 
 $config = new PhpCsFixer\Config();
 
@@ -154,4 +156,5 @@ return $config->setRules([
         ],
     ],
 ])
-              ->setFinder($finder);
+              ->setFinder($finder)
+;
