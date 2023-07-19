@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "60276a99cb06c84d80b691510e8e7cb5",
+    "content-hash": "926ea0dbf4fa9a9322b4a082e086aaf1",
     "packages": [
         {
             "name": "evp/money",
@@ -214,6 +214,80 @@
                 "source": "https://github.com/paysera/lib-dependency-injection/tree/1.3.0"
             },
             "time": "2022-03-15T08:54:14+00:00"
+        },
+        {
+            "name": "paysera/lib-normalization",
+            "version": "1.3.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/paysera/lib-normalization.git",
+                "reference": "71f9bd4ca6efe76ad3cb8428049c123c8327ffc0"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/paysera/lib-normalization/zipball/71f9bd4ca6efe76ad3cb8428049c123c8327ffc0",
+                "reference": "71f9bd4ca6efe76ad3cb8428049c123c8327ffc0",
+                "shasum": ""
+            },
+            "require": {
+                "paysera/lib-object-wrapper": "~0.3",
+                "php": "^7.0 || ^8.0"
+            },
+            "require-dev": {
+                "ext-json": "*",
+                "mockery/mockery": "^1.2",
+                "phpunit/phpunit": "^6.5 || ^9.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Paysera\\Component\\Normalization\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "Library for normalizing and denormalizing PHP objects to and from JSON structures",
+            "support": {
+                "issues": "https://github.com/paysera/lib-normalization/issues",
+                "source": "https://github.com/paysera/lib-normalization/tree/1.3.0"
+            },
+            "time": "2023-05-09T12:58:23+00:00"
+        },
+        {
+            "name": "paysera/lib-object-wrapper",
+            "version": "0.4.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/paysera/lib-object-wrapper.git",
+                "reference": "030dbf8603f1f5538158ff0997842a0adb971420"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/paysera/lib-object-wrapper/zipball/030dbf8603f1f5538158ff0997842a0adb971420",
+                "reference": "030dbf8603f1f5538158ff0997842a0adb971420",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^7.1 || ^8.0"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^6.0 || ^9.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Paysera\\Component\\ObjectWrapper\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "description": "Wrapper around JSON-decoded data that lets easily get structured items",
+            "support": {
+                "issues": "https://github.com/paysera/lib-object-wrapper/issues",
+                "source": "https://github.com/paysera/lib-object-wrapper/tree/0.4.0"
+            },
+            "time": "2023-04-28T07:29:07+00:00"
         },
         {
             "name": "paysera/lib-serializer",
@@ -1791,6 +1865,80 @@
                 }
             ],
             "time": "2023-06-21T09:57:24+00:00"
+        },
+        {
+            "name": "symfony/yaml",
+            "version": "v6.0.19",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/symfony/yaml.git",
+                "reference": "deec3a812a0305a50db8ae689b183f43d915c884"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/symfony/yaml/zipball/deec3a812a0305a50db8ae689b183f43d915c884",
+                "reference": "deec3a812a0305a50db8ae689b183f43d915c884",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=8.0.2",
+                "symfony/polyfill-ctype": "^1.8"
+            },
+            "conflict": {
+                "symfony/console": "<5.4"
+            },
+            "require-dev": {
+                "symfony/console": "^5.4|^6.0"
+            },
+            "suggest": {
+                "symfony/console": "For validating YAML files using the lint command"
+            },
+            "bin": [
+                "Resources/bin/yaml-lint"
+            ],
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Symfony\\Component\\Yaml\\": ""
+                },
+                "exclude-from-classmap": [
+                    "/Tests/"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Fabien Potencier",
+                    "email": "fabien@symfony.com"
+                },
+                {
+                    "name": "Symfony Community",
+                    "homepage": "https://symfony.com/contributors"
+                }
+            ],
+            "description": "Loads and dumps YAML files",
+            "homepage": "https://symfony.com",
+            "support": {
+                "source": "https://github.com/symfony/yaml/tree/v6.0.19"
+            },
+            "funding": [
+                {
+                    "url": "https://symfony.com/sponsor",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/fabpot",
+                    "type": "github"
+                },
+                {
+                    "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
+                    "type": "tidelift"
+                }
+            ],
+            "time": "2023-01-11T11:50:03+00:00"
         },
         {
             "name": "willdurand/jsonp-callback-validator",

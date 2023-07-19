@@ -4,22 +4,37 @@ declare(strict_types=1);
 
 namespace Ypppa\CommissionFees\Command;
 
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Throwable;
 use Ypppa\CommissionFees\Service\Calculator\CommissionFeeCalculator;
-use Ypppa\CommissionFees\Service\Calculator\Strategy\CommissionFeeStrategyFactory;
-use Ypppa\CommissionFees\Service\CurrencyConverter\CurrencyConverter;
-use Ypppa\CommissionFees\Service\ExchangeRateProvider\UrlExchangeRateProvider;
-use Ypppa\CommissionFees\Service\InputDataProvider\CsvOperationsDataProvider;
-use Ypppa\CommissionFees\Service\InputDataProvider\YamlConfigurationProvider;
-use Ypppa\CommissionFees\Service\OutputWriter\ConsoleCommissionFeesWriter;
+use Ypppa\CommissionFees\Service\InputDataProvider\OperationsDataProviderInterface;
+use Ypppa\CommissionFees\Service\OutputWriter\CommissionFeesWriterInterface;
 
 class CalculateCommissionFeesCommand extends Command
 {
     protected static $defaultDescription = 'Calculate transactions\' commission fees.';
     protected static $defaultName = 'app:calc-commissions';
+    private LoggerInterface $logger;
+    private OperationsDataProviderInterface $operationsDataProvider;
+    private CommissionFeeCalculator $calculator;
+    private CommissionFeesWriterInterface $outputWriter;
+
+    public function __construct(
+        LoggerInterface $logger,
+        OperationsDataProviderInterface $operationsDataProvider,
+        CommissionFeeCalculator $calculator,
+        CommissionFeesWriterInterface $outputWriter
+    ) {
+
+        parent::__construct();
+        $this->logger = $logger;
+        $this->operationsDataProvider = $operationsDataProvider;
+        $this->calculator = $calculator;
+        $this->outputWriter = $outputWriter;
+    }
 
     protected function configure(): void
     {
@@ -29,27 +44,16 @@ class CalculateCommissionFeesCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         try {
-            $operationsDataProvider = new CsvOperationsDataProvider();
-            $operationsDataProvider->load();
-            $configurationProvider = new YamlConfigurationProvider('config.yaml');
-            $configurationProvider->load();
-            $exchangeRateProvider = new UrlExchangeRateProvider();
-            $currencyConverter = new CurrencyConverter($exchangeRateProvider);
-            $commissionFeeStrategyFactory = new CommissionFeeStrategyFactory($configurationProvider);
+            $this->operationsDataProvider->load();
 
-            $calculator = new CommissionFeeCalculator(
-                $configurationProvider,
-                $currencyConverter,
-                $commissionFeeStrategyFactory,
-            );
+            $calculatedOperations = $this->calculator->calculate($this->operationsDataProvider->getOperations());
 
-            $calculatedOperations = $calculator->calculate($operationsDataProvider->getOperations());
-
-            $outputWriter = new ConsoleCommissionFeesWriter();
-            $outputWriter->write($calculatedOperations);
+            $this->outputWriter->write($calculatedOperations);
 
             return Command::SUCCESS;
         } catch (Throwable $exception) {
+            $this->logger->critical($exception);
+
             return Command::FAILURE;
         }
     }

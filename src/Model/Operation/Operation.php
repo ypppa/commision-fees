@@ -61,9 +61,11 @@ class Operation
         return $this->operationAmount;
     }
 
-    public function setCommissionFee(Money $commissionFee): void
+    public function setCommissionFee(?Money $commissionFee): self
     {
         $this->commissionFee = $commissionFee;
+
+        return $this;
     }
 
     public function getCommissionFee(): ?Money

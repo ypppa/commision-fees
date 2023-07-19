@@ -5,25 +5,25 @@ declare(strict_types=1);
 namespace Ypppa\CommissionFees\Service\Calculator;
 
 use Throwable;
+use Ypppa\CommissionFees\Model\Config\Config;
 use Ypppa\CommissionFees\Model\Operation\Operation;
 use Ypppa\CommissionFees\Model\Operation\OperationCollection;
 use Ypppa\CommissionFees\Model\User\UserCumulativeOperations;
 use Ypppa\CommissionFees\Service\Calculator\Strategy\CommissionFeeStrategyFactory;
 use Ypppa\CommissionFees\Service\CurrencyConverter\CurrencyConverter;
-use Ypppa\CommissionFees\Service\InputDataProvider\ConfigurationProviderInterface;
 
 class CommissionFeeCalculator
 {
-    private ConfigurationProviderInterface $configuration;
+    private Config $config;
     private CurrencyConverter $currencyConverter;
     private CommissionFeeStrategyFactory $commissionFeeStrategyFactory;
 
     public function __construct(
-        ConfigurationProviderInterface $configuration,
+        Config $config,
         CurrencyConverter $currencyConverter,
         CommissionFeeStrategyFactory $commissionFeeStrategyFactory,
     ) {
-        $this->configuration = $configuration;
+        $this->config = $config;
         $this->currencyConverter = $currencyConverter;
         $this->commissionFeeStrategyFactory = $commissionFeeStrategyFactory;
     }
@@ -39,7 +39,7 @@ class CommissionFeeCalculator
                     || $userCumulativeOperations === null) {
                     $userCumulativeOperations = new UserCumulativeOperations(
                         $operation->getUserId(),
-                        $this->configuration->getBaseCurrency()
+                        $this->config->getPrivateFreeWithdrawAmount()->getCurrency()
                     );
                 }
                 $this->handleOne($operation, $userCumulativeOperations);
@@ -53,11 +53,11 @@ class CommissionFeeCalculator
 
     private function handleOne(Operation $operation, UserCumulativeOperations $userCumulativeOperations): void
     {
-        $baseCurrencyAmount = $this->currencyConverter->convert(
+        $convertedAmount = $this->currencyConverter->convert(
             $operation->getOperationAmount(),
-            $this->configuration->getBaseCurrency(),
+            $this->config->getPrivateFreeWithdrawAmount()->getCurrency(),
         );
-        $userCumulativeOperations->add($baseCurrencyAmount);
+        $userCumulativeOperations->add($convertedAmount);
 
         $strategy = $this->commissionFeeStrategyFactory->getStrategy($operation);
         $commissionFee = $strategy->calculateCommissionFee(

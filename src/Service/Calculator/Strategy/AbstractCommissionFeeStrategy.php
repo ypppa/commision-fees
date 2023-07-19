@@ -5,16 +5,16 @@ declare(strict_types=1);
 namespace Ypppa\CommissionFees\Service\Calculator\Strategy;
 
 use Evp\Component\Money\Money;
+use Ypppa\CommissionFees\Model\Config\Config;
 use Ypppa\CommissionFees\Model\User\UserCumulativeOperations;
-use Ypppa\CommissionFees\Service\InputDataProvider\ConfigurationProviderInterface;
 
 abstract class AbstractCommissionFeeStrategy implements CommissionFeeStrategyInterface
 {
-    protected ConfigurationProviderInterface $configuration;
+    private Config $config;
 
-    public function __construct(ConfigurationProviderInterface $configuration)
+    public function __construct(Config $config)
     {
-        $this->configuration = $configuration;
+        $this->config = $config;
     }
 
     abstract public function calculateCommissionFee(

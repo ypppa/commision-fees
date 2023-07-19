@@ -4,68 +4,49 @@ declare(strict_types=1);
 
 namespace Ypppa\CommissionFees\Service\InputDataProvider;
 
-use Evp\Component\Money\Money;
+use Paysera\Component\Normalization\CoreDenormalizer;
+use Symfony\Component\Validator\Exception\ValidationFailedException;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Component\Yaml\Yaml;
+use Throwable;
+use Ypppa\CommissionFees\Exception\ConfigurationLoadException;
+use Ypppa\CommissionFees\Model\Config\Config;
 
-class YamlConfigurationProvider implements ConfigurationProviderInterface, CommonDataProviderInterface
+class YamlConfigurationProvider implements ConfigurationProviderInterface
 {
     private string $filePath;
+    private ?Config $config;
+    private CoreDenormalizer $denormalizer;
+    private ValidatorInterface $validator;
 
-    public function __construct(string $filePath)
+    public function __construct(CoreDenormalizer $denormalizer, ValidatorInterface $validator, string $filePath)
     {
+        $this->denormalizer = $denormalizer;
+        $this->validator = $validator;
         $this->filePath = $filePath;
+        $this->config = null;
     }
 
-    public function load(): void
+    private function load(): void
     {
-        // TODO: Implement load() method.
+        try {
+            $configuration = Yaml::parseFile($this->filePath);
+            $this->config = $this->denormalizer->denormalize($configuration, Config::class);
+            $violations = $this->validator->validate($this->config);
+            if ($violations->count() > 0) {
+                throw new ValidationFailedException($this->config, $violations);
+            }
+        } catch (Throwable $exception) {
+            throw new ConfigurationLoadException($exception);
+        }
     }
 
-    public function getBaseCurrency(): string
+    public function getConfig(): Config
     {
-        // TODO: Implement getBaseCurrency() method.
+        if ($this->config === null) {
+            $this->load();
+        }
 
-        return '';
-    }
-
-    public function getPrivateDepositCommission(): string
-    {
-        // TODO: Implement getPrivateDepositCommission() method.
-
-        return '';
-    }
-
-    public function getBusinessDepositCommission(): string
-    {
-        // TODO: Implement getBusinessDepositCommission() method.
-
-        return '';
-    }
-
-    public function getPrivateFreeWithdrawAmount(): Money
-    {
-        // TODO: Implement getPrivateFreeWithdrawAmount() method.
-
-        return new Money();
-    }
-
-    public function getPrivateFreeWithdrawCount(): int
-    {
-        // TODO: Implement getPrivateFreeWithdrawCount() method.
-
-        return 0;
-    }
-
-    public function getPrivateWithdrawCommission(): string
-    {
-        // TODO: Implement getPrivateWithdrawCommission() method.
-
-        return '';
-    }
-
-    public function getBusinessWithdrawCommission(): string
-    {
-        // TODO: Implement getBusinessWithdrawCommission() method.
-
-        return '';
+        return $this->config;
     }
 }
