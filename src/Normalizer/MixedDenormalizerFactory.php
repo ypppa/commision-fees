@@ -17,4 +17,12 @@ class MixedDenormalizerFactory implements DenormalizerFactoryInterface
 
         return new CoreDenormalizer($provider);
     }
+
+    public function createOperationDenormalizer(): CoreDenormalizer
+    {
+        $provider = new GroupedNormalizerRegistryProvider();
+        $provider->addTypeAwareNormalizer(new OperationNormalizer());
+
+        return new CoreDenormalizer($provider);
+    }
 }

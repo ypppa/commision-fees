@@ -9,4 +9,6 @@ use Paysera\Component\Normalization\CoreDenormalizer;
 interface DenormalizerFactoryInterface
 {
     public function createConfigDenormalizer(): CoreDenormalizer;
+
+    public function createOperationDenormalizer(): CoreDenormalizer;
 }

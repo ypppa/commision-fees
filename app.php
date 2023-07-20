@@ -14,13 +14,15 @@ use Ypppa\CommissionFees\Service\Calculator\CommissionFeeCalculator;
 use Ypppa\CommissionFees\Service\Calculator\Strategy\CommissionFeeStrategyFactory;
 use Ypppa\CommissionFees\Service\CurrencyConverter\CurrencyConverter;
 use Ypppa\CommissionFees\Service\ExchangeRateProvider\UrlExchangeRateProvider;
-use Ypppa\CommissionFees\Service\InputDataProvider\CsvOperationsDataProvider;
+use Ypppa\CommissionFees\Service\InputDataProvider\OperationsDataProvider;
 use Ypppa\CommissionFees\Service\InputDataProvider\YamlConfigurationProvider;
 use Ypppa\CommissionFees\Service\OutputWriter\ConsoleCommissionFeesWriter;
+use Ypppa\CommissionFees\Service\Parser\CsvOperationsParser;
 use Ypppa\CommissionFees\Validator\MetadataValidatorFactory;
 
 $application = new Application('commission-fees', '1.0.0');
 
+$logger = new ConsoleLogger(new ConsoleOutput());
 $configurationProvider = new YamlConfigurationProvider(
     (new MixedDenormalizerFactory())->createConfigDenormalizer(),
     (new MetadataValidatorFactory())->createValidator(),
@@ -33,9 +35,18 @@ $calculator = new CommissionFeeCalculator(
     new CommissionFeeStrategyFactory($configurationProvider->getConfig())
 );
 
+$operationsDataProvider = new OperationsDataProvider(
+    new CsvOperationsParser(
+        (new MixedDenormalizerFactory())->createOperationDenormalizer(),
+        (new MetadataValidatorFactory())->createValidator(),
+        'operations.csv',
+        $logger
+    )
+);
+
 $command = new CalculateCommissionFeesCommand(
-    new ConsoleLogger(new ConsoleOutput()),
-    new CsvOperationsDataProvider(),
+    $logger,
+    $operationsDataProvider,
     $calculator,
     new ConsoleCommissionFeesWriter()
 );

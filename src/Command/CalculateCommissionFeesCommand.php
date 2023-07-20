@@ -44,8 +44,6 @@ class CalculateCommissionFeesCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         try {
-            $this->operationsDataProvider->load();
-
             $calculatedOperations = $this->calculator->calculate($this->operationsDataProvider->getOperations());
 
             $this->outputWriter->write($calculatedOperations);
