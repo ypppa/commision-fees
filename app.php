@@ -9,7 +9,7 @@ use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Ypppa\CommissionFees\Command\CalculateCommissionFeesCommand;
-use Ypppa\CommissionFees\Normalizer\MixedDenormalizerFactory;
+use Ypppa\CommissionFees\Normalizer\DenormalizerFactory;
 use Ypppa\CommissionFees\Service\Calculator\CommissionFeeCalculator;
 use Ypppa\CommissionFees\Service\Calculator\Strategy\CommissionFeeStrategyFactory;
 use Ypppa\CommissionFees\Service\CurrencyConverter\CurrencyConverter;
@@ -23,21 +23,27 @@ use Ypppa\CommissionFees\Validator\MetadataValidatorFactory;
 $application = new Application('commission-fees', '1.0.0');
 
 $logger = new ConsoleLogger(new ConsoleOutput());
+$denormalizer = (new DenormalizerFactory())->createDenormalizer();
 $configurationProvider = new YamlConfigurationProvider(
-    (new MixedDenormalizerFactory())->createConfigDenormalizer(),
+    $denormalizer,
     (new MetadataValidatorFactory())->createValidator(),
     'config.yaml'
 );
 
 $calculator = new CommissionFeeCalculator(
     $configurationProvider->getConfig(),
-    new CurrencyConverter(new UrlExchangeRateProvider()),
+    new CurrencyConverter(
+        new UrlExchangeRateProvider(
+            $denormalizer,
+            'https://developers.paysera.com/tasks/api/currency-exchange-rates'
+        )
+    ),
     new CommissionFeeStrategyFactory($configurationProvider->getConfig())
 );
 
 $operationsDataProvider = new OperationsDataProvider(
     new CsvOperationsParser(
-        (new MixedDenormalizerFactory())->createOperationDenormalizer(),
+        $denormalizer,
         (new MetadataValidatorFactory())->createValidator(),
         'operations.csv',
         $logger

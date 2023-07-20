@@ -7,21 +7,15 @@ namespace Ypppa\CommissionFees\Normalizer;
 use Paysera\Component\Normalization\CoreDenormalizer;
 use Paysera\Component\Normalization\Registry\GroupedNormalizerRegistryProvider;
 
-class MixedDenormalizerFactory implements DenormalizerFactoryInterface
+class DenormalizerFactory
 {
-    public function createConfigDenormalizer(): CoreDenormalizer
+    public function createDenormalizer(): CoreDenormalizer
     {
         $provider = new GroupedNormalizerRegistryProvider();
         $provider->addTypeAwareNormalizer(new ConfigNormalizer());
         $provider->addTypeAwareNormalizer(new MoneyNormalizer());
-
-        return new CoreDenormalizer($provider);
-    }
-
-    public function createOperationDenormalizer(): CoreDenormalizer
-    {
-        $provider = new GroupedNormalizerRegistryProvider();
         $provider->addTypeAwareNormalizer(new OperationNormalizer());
+        $provider->addTypeAwareNormalizer(new ExchangeRatesNormalizer());
 
         return new CoreDenormalizer($provider);
     }

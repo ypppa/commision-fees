@@ -19,8 +19,7 @@ class CurrencyConverter
     public function convert(Money $money, $currency): Money
     {
         $rate = $this->exchangeRateProvider->getRate($currency, $money->getCurrency());
-        $amount = bcdiv($money->getAmount(), $rate);
 
-        return new Money($amount, $currency);
+        return new Money($money->div($rate)->getAmount(), $currency);
     }
 }
