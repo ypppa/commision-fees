@@ -54,7 +54,7 @@ $command = new CalculateCommissionFeesCommand(
     $logger,
     $operationsDataProvider,
     $calculator,
-    new ConsoleCommissionFeesWriter()
+    new ConsoleCommissionFeesWriter(new ConsoleOutput())
 );
 
 $application->add($command);
