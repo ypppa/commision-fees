@@ -30,6 +30,6 @@ class OperationsDataProvider implements OperationsDataProviderInterface
     private function load(): void
     {
         $this->operations = $this->parser->parse();
-        $this->operations->sort();
+        $this->operations->sortByUserIdAndDate();
     }
 }

@@ -16,6 +16,7 @@ class Operation
     public const OPERATION_TYPE_DEPOSIT = 'deposit';
     public const OPERATION_TYPE_WITHDRAW = 'withdraw';
 
+    private int $index;
     private DateTimeImmutable $date;
     private string $userId;
     private string $userType;
@@ -91,5 +92,40 @@ class Operation
     public function getCommissionFee(): ?Money
     {
         return $this->commissionFee;
+    }
+
+    public function getStartOfWeek(): string
+    {
+        return $this->date->modify('Monday this week')->format('YYYY-mm-dd');
+    }
+
+    public function isUserPrivate(): bool
+    {
+        return $this->userType === self::USER_TYPE_PRIVATE;
+    }
+
+    public function isUserBusiness(): bool
+    {
+        return $this->userType === self::USER_TYPE_BUSINESS;
+    }
+
+    public function isDeposit(): bool
+    {
+        return $this->operationType === self::OPERATION_TYPE_DEPOSIT;
+    }
+
+    public function isWithdraw(): bool
+    {
+        return $this->operationType === self::OPERATION_TYPE_WITHDRAW;
+    }
+
+    public function getIndex(): int
+    {
+        return $this->index;
+    }
+
+    public function setIndex(int $index): void
+    {
+        $this->index = $index;
     }
 }

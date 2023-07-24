@@ -30,15 +30,18 @@ $configurationProvider = new YamlConfigurationProvider(
     'config.yaml'
 );
 
+$currencyConverter = new CurrencyConverter(
+    new UrlExchangeRateProvider(
+        $denormalizer,
+        'https://developers.paysera.com/tasks/api/currency-exchange-rates'
+    ),
+    $configurationProvider->getConfig()
+);
+
 $calculator = new CommissionFeeCalculator(
     $configurationProvider->getConfig(),
-    new CurrencyConverter(
-        new UrlExchangeRateProvider(
-            $denormalizer,
-            'https://developers.paysera.com/tasks/api/currency-exchange-rates'
-        )
-    ),
-    new CommissionFeeStrategyFactory($configurationProvider->getConfig())
+    $currencyConverter,
+    new CommissionFeeStrategyFactory($configurationProvider->getConfig(), $currencyConverter)
 );
 
 $operationsDataProvider = new OperationsDataProvider(

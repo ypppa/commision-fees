@@ -34,12 +34,15 @@ class CommissionFeeCalculator
         try {
             $iterator = $operationCollection->getIterator();
             foreach ($iterator as $operation) {
-                if ($userCumulativeOperations instanceof UserCumulativeOperations
-                    && $userCumulativeOperations->getUserId() !== $operation->getUserId()
-                    || $userCumulativeOperations === null) {
+                if ((!$userCumulativeOperations instanceof UserCumulativeOperations
+                        || $userCumulativeOperations->getUserId() !== $operation->getUserId()
+                        || $userCumulativeOperations->getStartOfWeek() !== $operation->getStartOfWeek())
+                    && $operation->isWithdraw()
+                ) {
                     $userCumulativeOperations = new UserCumulativeOperations(
                         $operation->getUserId(),
-                        $this->config->getPrivateFreeWithdrawAmount()->getCurrency()
+                        $this->config->getPrivateFreeWithdrawAmount()->getCurrency(),
+                        $operation->getDate()
                     );
                 }
                 $this->handleOne($operation, $userCumulativeOperations);
@@ -51,19 +54,21 @@ class CommissionFeeCalculator
         return $operationCollection;
     }
 
-    private function handleOne(Operation $operation, UserCumulativeOperations $userCumulativeOperations): void
+    private function handleOne(Operation $operation, ?UserCumulativeOperations $userCumulativeOperations): void
     {
-        $convertedAmount = $this->currencyConverter->convert(
-            $operation->getOperationAmount(),
-            $this->config->getPrivateFreeWithdrawAmount()->getCurrency(),
-        );
-        $userCumulativeOperations->add($convertedAmount);
-
         $strategy = $this->commissionFeeStrategyFactory->getStrategy($operation);
         $commissionFee = $strategy->calculateCommissionFee(
-            $operation->getOperationAmount(),
+            $operation,
             $userCumulativeOperations
         );
         $operation->setCommissionFee($commissionFee);
+
+        if ($operation->isWithdraw()) {
+            $convertedAmount = $this->currencyConverter->convert(
+                $operation->getOperationAmount(),
+                $this->config->getPrivateFreeWithdrawAmount()->getCurrency(),
+            );
+            $userCumulativeOperations->add($convertedAmount);
+        }
     }
 }

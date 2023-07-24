@@ -17,18 +17,22 @@ class OperationCollection implements IteratorAggregate
      * @var Operation[]
      */
     private array $operationList;
+    private int $count;
 
     public function __construct()
     {
+        $this->count = 0;
         $this->operationList = [];
     }
 
     public function add(Operation $operation): void
     {
+        $this->count++;
+        $operation->setIndex($this->count);
         $this->operationList[] = $operation;
     }
 
-    public function sort(): void
+    public function sortByUserIdAndDate(): void
     {
         usort($this->operationList, function (Operation $operation1, Operation $operation2): int {
             $userIdCompareResult = strcmp($operation1->getUserId(), $operation2->getUserId());
@@ -44,6 +48,13 @@ class OperationCollection implements IteratorAggregate
             }
 
             return $userIdCompareResult;
+        });
+    }
+
+    public function sortByIndex(): void
+    {
+        usort($this->operationList, function (Operation $operation1, Operation $operation2): int {
+            return $operation1->getIndex() < $operation2->getIndex() ? -1 : 1;
         });
     }
 

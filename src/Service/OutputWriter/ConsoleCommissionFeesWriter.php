@@ -18,8 +18,9 @@ class ConsoleCommissionFeesWriter implements CommissionFeesWriterInterface
 
     public function write(OperationCollection $operations): void
     {
+        $operations->sortByIndex();
         foreach ($operations as $operation) {
-            $this->output->writeln($operation->getCommissionFee()->formatAmount(2));
+            $this->output->writeln($operation->getCommissionFee()->formatAmount());
         }
     }
 }
