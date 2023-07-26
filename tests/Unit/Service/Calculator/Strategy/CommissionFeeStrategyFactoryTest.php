@@ -15,6 +15,7 @@ use Ypppa\CommissionFees\Service\Calculator\Strategy\WithdrawBusinessCommissionF
 use Ypppa\CommissionFees\Service\Calculator\Strategy\WithdrawPrivateCommissionFeeStrategy;
 use Ypppa\CommissionFees\Service\Calculator\Strategy\ZeroCommissionFeeStrategy;
 use Ypppa\CommissionFees\Service\CurrencyConverter\CurrencyConverter;
+use Ypppa\CommissionFees\Service\InputDataProvider\ConfigurationProviderInterface;
 
 /**
  * @codeCoverageIgnore
@@ -26,7 +27,7 @@ class CommissionFeeStrategyFactoryTest extends TestCase
     public function setUp(): void
     {
         $this->commissionFeeStrategyFactory = new CommissionFeeStrategyFactory(
-            $this->createMock(Config::class),
+            $this->createMock(ConfigurationProviderInterface::class),
             $this->createMock(CurrencyConverter::class),
         );
     }

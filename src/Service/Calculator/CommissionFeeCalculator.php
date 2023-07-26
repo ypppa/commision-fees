@@ -6,25 +6,25 @@ namespace Ypppa\CommissionFees\Service\Calculator;
 
 use Throwable;
 use Ypppa\CommissionFees\Exception\CalculationFailedException;
-use Ypppa\CommissionFees\Model\Config\Config;
 use Ypppa\CommissionFees\Model\Operation\Operation;
 use Ypppa\CommissionFees\Model\Operation\OperationCollection;
 use Ypppa\CommissionFees\Model\User\UserCumulativeOperations;
 use Ypppa\CommissionFees\Service\Calculator\Strategy\CommissionFeeStrategyFactory;
 use Ypppa\CommissionFees\Service\CurrencyConverter\CurrencyConverter;
+use Ypppa\CommissionFees\Service\InputDataProvider\ConfigurationProviderInterface;
 
 class CommissionFeeCalculator
 {
-    private Config $config;
+    private ConfigurationProviderInterface $configurationProvider;
     private CurrencyConverter $currencyConverter;
     private CommissionFeeStrategyFactory $commissionFeeStrategyFactory;
 
     public function __construct(
-        Config $config,
+        ConfigurationProviderInterface $configurationProvider,
         CurrencyConverter $currencyConverter,
         CommissionFeeStrategyFactory $commissionFeeStrategyFactory,
     ) {
-        $this->config = $config;
+        $this->configurationProvider = $configurationProvider;
         $this->currencyConverter = $currencyConverter;
         $this->commissionFeeStrategyFactory = $commissionFeeStrategyFactory;
     }
@@ -43,7 +43,7 @@ class CommissionFeeCalculator
                 ) {
                     $userCumulativeOperations = new UserCumulativeOperations(
                         $operation->getUserId(),
-                        $this->config->getPrivateFreeWithdrawAmount()->getCurrency(),
+                        $this->configurationProvider->getConfig()->getPrivateFreeWithdrawAmount()->getCurrency(),
                         $operation->getDate()
                     );
                 }
@@ -70,7 +70,7 @@ class CommissionFeeCalculator
         if ($operation->isWithdraw()) {
             $convertedAmount = $this->currencyConverter->convert(
                 $operation->getOperationAmount(),
-                $this->config->getPrivateFreeWithdrawAmount()->getCurrency(),
+                $this->configurationProvider->getConfig()->getPrivateFreeWithdrawAmount()->getCurrency(),
             );
             $userCumulativeOperations->add($convertedAmount);
         }

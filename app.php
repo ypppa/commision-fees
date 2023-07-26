@@ -5,60 +5,18 @@ declare(strict_types=1);
 
 require __DIR__ . '/vendor/autoload.php';
 
+use Symfony\Component\Config\FileLocator;
 use Symfony\Component\Console\Application;
-use Symfony\Component\Console\Logger\ConsoleLogger;
-use Symfony\Component\Console\Output\ConsoleOutput;
-use Ypppa\CommissionFees\Command\CalculateCommissionFeesCommand;
-use Ypppa\CommissionFees\Normalizer\DenormalizerFactory;
-use Ypppa\CommissionFees\Service\Calculator\CommissionFeeCalculator;
-use Ypppa\CommissionFees\Service\Calculator\Strategy\CommissionFeeStrategyFactory;
-use Ypppa\CommissionFees\Service\CurrencyConverter\CurrencyConverter;
-use Ypppa\CommissionFees\Service\ExchangeRateProvider\UrlExchangeRateProvider;
-use Ypppa\CommissionFees\Service\InputDataProvider\OperationsDataProvider;
-use Ypppa\CommissionFees\Service\InputDataProvider\YamlConfigurationProvider;
-use Ypppa\CommissionFees\Service\OutputWriter\ConsoleCommissionFeesWriter;
-use Ypppa\CommissionFees\Service\Parser\CsvOperationsParser;
-use Ypppa\CommissionFees\Validator\MetadataValidatorFactory;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
 
 $application = new Application('commission-fees', '1.0.0');
 
-$logger = new ConsoleLogger(new ConsoleOutput());
-$denormalizer = (new DenormalizerFactory())->createDenormalizer();
-$configurationProvider = new YamlConfigurationProvider(
-    $denormalizer,
-    (new MetadataValidatorFactory())->createValidator(),
-    'config.yaml'
-);
+$container = new ContainerBuilder();
+$loader = new XmlFileLoader($container, new FileLocator(__DIR__));
+$loader->load('services.xml');
 
-$currencyConverter = new CurrencyConverter(
-    new UrlExchangeRateProvider(
-        $denormalizer,
-        'https://developers.paysera.com/tasks/api/currency-exchange-rates'
-    ),
-    $configurationProvider->getConfig()
-);
-
-$calculator = new CommissionFeeCalculator(
-    $configurationProvider->getConfig(),
-    $currencyConverter,
-    new CommissionFeeStrategyFactory($configurationProvider->getConfig(), $currencyConverter)
-);
-
-$operationsDataProvider = new OperationsDataProvider(
-    new CsvOperationsParser(
-        $denormalizer,
-        (new MetadataValidatorFactory())->createValidator(),
-        'operations.csv',
-        $logger
-    )
-);
-
-$command = new CalculateCommissionFeesCommand(
-    $logger,
-    $operationsDataProvider,
-    $calculator,
-    new ConsoleCommissionFeesWriter(new ConsoleOutput())
-);
+$command = $container->get('ypppa.commission_fees.command.calculate_commission_fees');
 
 $application->add($command);
 

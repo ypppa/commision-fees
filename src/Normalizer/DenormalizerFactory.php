@@ -9,7 +9,7 @@ use Paysera\Component\Normalization\Registry\GroupedNormalizerRegistryProvider;
 
 class DenormalizerFactory
 {
-    public function createDenormalizer(): CoreDenormalizer
+    public static function createDenormalizer(): CoreDenormalizer
     {
         $provider = new GroupedNormalizerRegistryProvider();
         $provider->addTypeAwareNormalizer(new ConfigNormalizer());

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<container xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xmlns="http://symfony.com/schema/dic/services"
+           xsi:schemaLocation="http://symfony.com/schema/dic/services
+        https://symfony.com/schema/dic/services/services-1.0.xsd">
+
+    <parameters>
+        <parameter key="config.file_path">config.yaml</parameter>
+        <parameter key="exchange_rates.url">https://developers.paysera.com/tasks/api/currency-exchange-rates</parameter>
+        <parameter key="operations_csv_file_path">operations.csv</parameter>
+    </parameters>
+
+    <services>
+        <service id="ypppa.commission_fees.console_output" class="Symfony\Component\Console\Output\ConsoleOutput"/>
+        <service id="ypppa.commission_fees.console_logger" class="Symfony\Component\Console\Logger\ConsoleLogger">
+            <argument type="service" id="ypppa.commission_fees.console_output"/>
+        </service>
+        <service id="ypppa.commission_fees.core_denormalizer" class="Paysera\Component\Normalization\CoreDenormalizer">
+            <factory class="Ypppa\CommissionFees\Normalizer\DenormalizerFactory" method="createDenormalizer"/>
+        </service>
+        <service id="ypppa.commission_fees.validator" class="Symfony\Component\Validator\Validator\ValidatorInterface">
+            <factory class="Ypppa\CommissionFees\Validator\MetadataValidatorFactory" method="createValidator"/>
+        </service>
+        <service id="ypppa.commission_fees.yaml_configuration_provider"
+                 class="Ypppa\CommissionFees\Service\InputDataProvider\YamlConfigurationProvider">
+            <argument type="service" id="ypppa.commission_fees.core_denormalizer"/>
+            <argument type="service" id="ypppa.commission_fees.validator"/>
+            <argument>%config.file_path%</argument>
+        </service>
+        <service id="ypppa.commission_fees.url_exchange_rate_provider"
+                 class="Ypppa\CommissionFees\Service\ExchangeRateProvider\UrlExchangeRateProvider">
+            <argument type="service" id="ypppa.commission_fees.core_denormalizer"/>
+            <argument>%exchange_rates.url%</argument>
+        </service>
+        <service id="ypppa.commission_fees.currency_converter"
+                 class="Ypppa\CommissionFees\Service\CurrencyConverter\CurrencyConverter">
+            <argument type="service" id="ypppa.commission_fees.url_exchange_rate_provider"/>
+            <argument type="service" id="ypppa.commission_fees.yaml_configuration_provider"/>
+        </service>
+        <service id="ypppa.commission_fees.commission_fee_strategy_factory"
+                 class="Ypppa\CommissionFees\Service\Calculator\Strategy\CommissionFeeStrategyFactory">
+            <argument type="service" id="ypppa.commission_fees.yaml_configuration_provider"/>
+            <argument type="service" id="ypppa.commission_fees.currency_converter"/>
+        </service>
+        <service id="ypppa.commission_fees.commission_fee_calculator"
+                 class="Ypppa\CommissionFees\Service\Calculator\CommissionFeeCalculator">
+            <argument type="service" id="ypppa.commission_fees.yaml_configuration_provider"/>
+            <argument type="service" id="ypppa.commission_fees.currency_converter"/>
+            <argument type="service" id="ypppa.commission_fees.commission_fee_strategy_factory"/>
+        </service>
+        <service id="ypppa.commission_fees.csv_operations_parser"
+                 class="Ypppa\CommissionFees\Service\Parser\CsvOperationsParser">
+            <argument type="service" id="ypppa.commission_fees.core_denormalizer"/>
+            <argument type="service" id="ypppa.commission_fees.validator"/>
+            <argument>%operations_csv_file_path%</argument>
+            <argument type="service" id="ypppa.commission_fees.console_logger"/>
+        </service>
+        <service id="ypppa.commission_fees.operations_data_provider"
+                 class="Ypppa\CommissionFees\Service\InputDataProvider\OperationsDataProvider">
+            <argument type="service" id="ypppa.commission_fees.csv_operations_parser"/>
+        </service>
+        <service id="ypppa.commission_fees.console_commission_fees_writer"
+                 class="Ypppa\CommissionFees\Service\OutputWriter\ConsoleCommissionFeesWriter">
+            <argument type="service" id="ypppa.commission_fees.console_output"/>
+        </service>
+        <service id="ypppa.commission_fees.command.calculate_commission_fees"
+                 class="Ypppa\CommissionFees\Command\CalculateCommissionFeesCommand">
+            <argument type="service" id="ypppa.commission_fees.console_logger"/>
+            <argument type="service" id="ypppa.commission_fees.operations_data_provider"/>
+            <argument type="service" id="ypppa.commission_fees.commission_fee_calculator"/>
+            <argument type="service" id="ypppa.commission_fees.console_commission_fees_writer"/>
+        </service>
+    </services>
+</container>

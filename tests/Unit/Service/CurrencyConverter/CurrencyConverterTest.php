@@ -13,6 +13,7 @@ use Ypppa\CommissionFees\Model\ExchangeRate\ExchangeRate;
 use Ypppa\CommissionFees\Model\ExchangeRate\ExchangeRates;
 use Ypppa\CommissionFees\Service\CurrencyConverter\CurrencyConverter;
 use Ypppa\CommissionFees\Service\ExchangeRateProvider\MockExchangeRateProvider;
+use Ypppa\CommissionFees\Service\InputDataProvider\ConfigurationProviderInterface;
 
 /**
  * @codeCoverageIgnore
@@ -33,7 +34,9 @@ class CurrencyConverterTest extends TestCase
             ->addRate(new ExchangeRate('JPY', '129.53'))
             ->addRate(new ExchangeRate('USD', '1.1497'))
         ;
-        $this->currencyConverter = new CurrencyConverter(new MockExchangeRateProvider($exchangeRates), $config);
+        $configurationProvider = $this->createMock(ConfigurationProviderInterface::class);
+        $configurationProvider->expects($this->any())->method('getConfig')->willReturn($config);
+        $this->currencyConverter = new CurrencyConverter(new MockExchangeRateProvider($exchangeRates), $configurationProvider);
     }
 
     /**

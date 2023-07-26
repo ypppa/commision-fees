@@ -33,8 +33,8 @@ class CalculateCommissionFeesCommandTest extends TestCase
     {
         $logger = new NullLogger();
         $configurationProvider = new YamlConfigurationProvider(
-            (new DenormalizerFactory())->createDenormalizer(),
-            (new MetadataValidatorFactory())->createValidator(),
+            DenormalizerFactory::createDenormalizer(),
+            MetadataValidatorFactory::createValidator(),
             'tests/_data/config.yaml'
         );
         $exchangeRates = (new ExchangeRates())
@@ -46,17 +46,17 @@ class CalculateCommissionFeesCommandTest extends TestCase
         ;
         $currencyConverter = new CurrencyConverter(
             new MockExchangeRateProvider($exchangeRates),
-            $configurationProvider->getConfig()
+            $configurationProvider
         );
         $calculator = new CommissionFeeCalculator(
-            $configurationProvider->getConfig(),
+            $configurationProvider,
             $currencyConverter,
-            new CommissionFeeStrategyFactory($configurationProvider->getConfig(), $currencyConverter)
+            new CommissionFeeStrategyFactory($configurationProvider, $currencyConverter)
         );
         $operationsDataProvider = new OperationsDataProvider(
             new CsvOperationsParser(
-                (new DenormalizerFactory())->createDenormalizer(),
-                (new MetadataValidatorFactory())->createValidator(),
+                DenormalizerFactory::createDenormalizer(),
+                MetadataValidatorFactory::createValidator(),
                 'tests/_data/operations.csv',
                 $logger
             )

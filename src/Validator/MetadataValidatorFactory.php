@@ -7,9 +7,9 @@ namespace Ypppa\CommissionFees\Validator;
 use Symfony\Component\Validator\Validation;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
-class MetadataValidatorFactory implements ValidatorFactoryInterface
+class MetadataValidatorFactory
 {
-    public function createValidator(): ValidatorInterface
+    public static function createValidator(): ValidatorInterface
     {
         return Validation::createValidatorBuilder()
             ->addMethodMapping('loadValidatorMetadata')

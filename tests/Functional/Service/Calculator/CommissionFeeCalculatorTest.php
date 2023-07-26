@@ -17,6 +17,7 @@ use Ypppa\CommissionFees\Service\Calculator\CommissionFeeCalculator;
 use Ypppa\CommissionFees\Service\Calculator\Strategy\CommissionFeeStrategyFactory;
 use Ypppa\CommissionFees\Service\CurrencyConverter\CurrencyConverter;
 use Ypppa\CommissionFees\Service\ExchangeRateProvider\MockExchangeRateProvider;
+use Ypppa\CommissionFees\Service\InputDataProvider\ConfigurationProviderInterface;
 
 /**
  * @codeCoverageIgnore
@@ -35,17 +36,19 @@ class CommissionFeeCalculatorTest extends TestCase
             ->setPrivateWithdrawCommission('0.003')
             ->setBusinessWithdrawCommission('0.005')
         ;
+        $configurationProvider = $this->createMock(ConfigurationProviderInterface::class);
+        $configurationProvider->expects($this->any())->method('getConfig')->willReturn($config);
         $exchangeRates = (new ExchangeRates())
             ->setBase('EUR')
             ->setDate(new DateTimeImmutable('today'))
             ->addRate(new ExchangeRate('JPY', '129.53'))
             ->addRate(new ExchangeRate('USD', '1.1497'))
         ;
-        $currencyConverter = new CurrencyConverter(new MockExchangeRateProvider($exchangeRates), $config);
+        $currencyConverter = new CurrencyConverter(new MockExchangeRateProvider($exchangeRates), $configurationProvider);
         $this->calculator = new CommissionFeeCalculator(
-            $config,
+            $configurationProvider,
             $currencyConverter,
-            new CommissionFeeStrategyFactory($config, $currencyConverter)
+            new CommissionFeeStrategyFactory($configurationProvider, $currencyConverter)
         );
     }
 

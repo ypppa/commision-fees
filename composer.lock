@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "0a268a1e7f20a289abc4ff541506aed2",
+    "content-hash": "944dedc7a976ab963bc17fa99bfc2444",
     "packages": [
         {
             "name": "evp/money",
