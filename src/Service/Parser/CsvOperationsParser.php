@@ -59,6 +59,9 @@ class CsvOperationsParser implements OperationsParserInterface
                 $operations->add($operation);
             } catch (Throwable $exception) {
                 $this->logger->error($exception);
+                fclose($file);
+
+                throw $exception;
             }
         }
 

@@ -51,8 +51,9 @@ class CalculateCommissionFeesCommand extends Command
             return Command::SUCCESS;
         } catch (Throwable $exception) {
             $this->logger->critical($exception);
+            $output->write('Unexpected error: ' . $exception->getMessage());
 
-            return Command::FAILURE;
+            return 255;
         }
     }
 }

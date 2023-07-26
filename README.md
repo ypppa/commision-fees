@@ -14,8 +14,22 @@ composer install
 
 ## Code style
 
-To run code style check type command: 
+To run code style check type command:
 
 ```bash
 composer check-cs
+```
+
+## Running tests
+
+To run functional tests:
+
+```bash
+php bin/phpunit tests/Functional
+```
+
+To run unit tests:
+
+```bash
+php bin/phpunit tests/Unit
 ```

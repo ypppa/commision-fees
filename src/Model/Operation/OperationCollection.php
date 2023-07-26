@@ -25,11 +25,13 @@ class OperationCollection implements IteratorAggregate
         $this->operationList = [];
     }
 
-    public function add(Operation $operation): void
+    public function add(Operation $operation): self
     {
         $this->count++;
         $operation->setIndex($this->count);
         $this->operationList[] = $operation;
+
+        return $this;
     }
 
     public function sortByUserIdAndDate(): void

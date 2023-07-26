@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ypppa\CommissionFees\Service\Calculator;
 
 use Throwable;
+use Ypppa\CommissionFees\Exception\CalculationFailedException;
 use Ypppa\CommissionFees\Model\Config\Config;
 use Ypppa\CommissionFees\Model\Operation\Operation;
 use Ypppa\CommissionFees\Model\Operation\OperationCollection;
@@ -30,6 +31,7 @@ class CommissionFeeCalculator
 
     public function calculate(OperationCollection $operationCollection): OperationCollection
     {
+        $operationCollection->sortByUserIdAndDate();
         $userCumulativeOperations = null;
         try {
             $iterator = $operationCollection->getIterator();
@@ -48,8 +50,10 @@ class CommissionFeeCalculator
                 $this->handleOne($operation, $userCumulativeOperations);
             }
         } catch (Throwable $exception) {
-            // TODO: process exception
+            throw new CalculationFailedException($exception);
         }
+
+        $operationCollection->sortByIndex();
 
         return $operationCollection;
     }
