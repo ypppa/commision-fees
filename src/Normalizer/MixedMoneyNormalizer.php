@@ -12,7 +12,7 @@ use Paysera\Component\Normalization\TypeAwareInterface;
 use Paysera\Component\Serializer\Exception\InvalidDataException;
 use Ypppa\CommissionFees\Exception\UnsupportedCurrencyException;
 
-class MoneyNormalizer implements MixedTypeDenormalizerInterface, TypeAwareInterface
+class MixedMoneyNormalizer implements MixedTypeDenormalizerInterface, TypeAwareInterface
 {
     public function getType(): string
     {

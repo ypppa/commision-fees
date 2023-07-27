@@ -6,6 +6,7 @@ namespace Ypppa\CommissionFees\Command;
 
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Ypppa\CommissionFees\Exception\CommissionFeeCalculationFailedException;
@@ -38,13 +39,21 @@ class CalculateCommissionFeesCommand extends Command
 
     protected function configure(): void
     {
-        $this->setHelp('This command allows you to calculate transactions\' commission fees.');
+        $this
+            ->setHelp('This command allows you to calculate transactions\' commission fees.')
+            ->addArgument('file_path', InputArgument::REQUIRED, 'Operations data file path')
+            ->addArgument('format', InputArgument::REQUIRED, 'Operations file format')
+        ;
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         try {
-            $calculatedOperations = $this->calculator->calculate($this->operationsDataProvider->getOperations());
+            $filePath = $input->getArgument('file_path');
+            $format = $input->getArgument('format');
+            $calculatedOperations = $this->calculator->calculate(
+                $this->operationsDataProvider->getOperations($filePath, $format)
+            );
 
             $this->outputWriter->write($calculatedOperations);
 

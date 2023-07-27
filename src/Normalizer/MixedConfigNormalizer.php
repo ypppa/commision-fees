@@ -11,7 +11,7 @@ use Paysera\Component\Normalization\TypeAwareInterface;
 use Paysera\Component\Serializer\Exception\InvalidDataException;
 use Ypppa\CommissionFees\Model\Config\Config;
 
-class ConfigNormalizer implements MixedTypeDenormalizerInterface, TypeAwareInterface
+class MixedConfigNormalizer implements MixedTypeDenormalizerInterface, TypeAwareInterface
 {
     public function getType(): string
     {

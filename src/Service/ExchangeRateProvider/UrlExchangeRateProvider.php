@@ -18,9 +18,9 @@ class UrlExchangeRateProvider implements ExchangeRateProviderInterface
 
     public function __construct(CoreDenormalizer $denormalizer, string $url)
     {
-        $this->denormalizer = $denormalizer;
         $this->url = $url;
         $this->exchangeRates = null;
+        $this->denormalizer = $denormalizer;
     }
 
     /**

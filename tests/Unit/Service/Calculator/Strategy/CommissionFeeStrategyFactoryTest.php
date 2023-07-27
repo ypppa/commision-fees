@@ -7,7 +7,6 @@ namespace Ypppa\CommissionFees\Tests\Unit\Service\Calculator\Strategy;
 use DateTimeImmutable;
 use Evp\Component\Money\Money;
 use PHPUnit\Framework\TestCase;
-use Ypppa\CommissionFees\Model\Config\Config;
 use Ypppa\CommissionFees\Model\Operation\Operation;
 use Ypppa\CommissionFees\Service\Calculator\Strategy\CommissionFeeStrategyFactory;
 use Ypppa\CommissionFees\Service\Calculator\Strategy\DepositCommissionFeeStrategy;

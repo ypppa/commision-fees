@@ -16,13 +16,13 @@ class YamlConfigurationProvider implements ConfigurationProviderInterface
 {
     private string $filePath;
     private ?Config $config;
-    private CoreDenormalizer $denormalizer;
     private ValidatorInterface $validator;
+    private CoreDenormalizer $denormalizer;
 
-    public function __construct(CoreDenormalizer $denormalizer, ValidatorInterface $validator, string $filePath)
+    public function __construct(ValidatorInterface $validator, CoreDenormalizer $denormalizer, string $filePath)
     {
-        $this->denormalizer = $denormalizer;
         $this->validator = $validator;
+        $this->denormalizer = $denormalizer;
         $this->filePath = $filePath;
         $this->config = null;
     }
@@ -45,6 +45,10 @@ class YamlConfigurationProvider implements ConfigurationProviderInterface
         }
     }
 
+    /**
+     * @return Config
+     * @throws ConfigurationLoadException
+     */
     public function getConfig(): Config
     {
         if ($this->config === null) {

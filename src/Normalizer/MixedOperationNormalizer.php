@@ -13,7 +13,7 @@ use Paysera\Component\Serializer\Exception\InvalidDataException;
 use Throwable;
 use Ypppa\CommissionFees\Model\Operation\Operation;
 
-class OperationNormalizer implements MixedTypeDenormalizerInterface, TypeAwareInterface
+class MixedOperationNormalizer implements MixedTypeDenormalizerInterface, TypeAwareInterface
 {
     public function getType(): string
     {

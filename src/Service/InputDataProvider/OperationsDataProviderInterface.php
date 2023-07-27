@@ -8,5 +8,5 @@ use Ypppa\CommissionFees\Model\Operation\OperationCollection;
 
 interface OperationsDataProviderInterface
 {
-    public function getOperations(): OperationCollection;
+    public function getOperations(string $filePath, string $format): OperationCollection;
 }

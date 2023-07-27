@@ -7,7 +7,9 @@ namespace Ypppa\CommissionFees\Tests\Functional\Command;
 use DateTimeImmutable;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
+use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\BufferedOutput;
+use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Tester\CommandTester;
 use Ypppa\CommissionFees\Command\CalculateCommissionFeesCommand;
 use Ypppa\CommissionFees\Exception\CommissionFeeCalculationFailedException;
@@ -23,7 +25,7 @@ use Ypppa\CommissionFees\Service\ExchangeRateProvider\MockExchangeRateProvider;
 use Ypppa\CommissionFees\Service\InputDataProvider\OperationsDataProvider;
 use Ypppa\CommissionFees\Service\InputDataProvider\YamlConfigurationProvider;
 use Ypppa\CommissionFees\Service\OutputWriter\ConsoleCommissionFeesWriter;
-use Ypppa\CommissionFees\Service\Parser\CsvOperationsParser;
+use Ypppa\CommissionFees\Service\Parser\OperationsParserFactory;
 use Ypppa\CommissionFees\Validator\MetadataValidatorFactory;
 
 class CalculateCommissionFeesCommandTest extends TestCase
@@ -34,10 +36,10 @@ class CalculateCommissionFeesCommandTest extends TestCase
 
     public function setUp(): void
     {
-        $logger = new NullLogger();
+        $logger = new ConsoleLogger(new ConsoleOutput());
         $configurationProvider = new YamlConfigurationProvider(
-            DenormalizerFactory::createDenormalizer(),
             MetadataValidatorFactory::createValidator(),
+            DenormalizerFactory::createMixedConfigDenormalizer(),
             'tests/_data/config.yaml'
         );
         $exchangeRates = (new ExchangeRates())
@@ -57,10 +59,9 @@ class CalculateCommissionFeesCommandTest extends TestCase
             new CommissionFeeStrategyFactory($configurationProvider, $currencyConverter)
         );
         $operationsDataProvider = new OperationsDataProvider(
-            new CsvOperationsParser(
-                DenormalizerFactory::createDenormalizer(),
-                MetadataValidatorFactory::createValidator(),
-                'tests/_data/operations.csv'
+            new OperationsParserFactory(
+                DenormalizerFactory::createMixedOperationDenormalizer(),
+                DenormalizerFactory::createObjectOperationDenormalizer()
             )
         );
 
@@ -76,7 +77,10 @@ class CalculateCommissionFeesCommandTest extends TestCase
     public function testCommandHappyPath(): void
     {
         $commandTester = new CommandTester($this->commandWithSuccess);
-        $commandTester->execute([]);
+        $commandTester->execute([
+            'file_path' => 'tests/_data/operations.csv',
+            'format' => OperationsParserFactory::CSV_FILE_FORMAT,
+        ]);
         $commandTester->assertCommandIsSuccessful();
         $this->assertEquals(
             implode(chr(10), [
@@ -110,23 +114,23 @@ class CalculateCommissionFeesCommandTest extends TestCase
      */
     public function testExceptions(string $filePath, int $expectedResultCode, string $expectedMessage): void
     {
-        $operationsDataProvider = new OperationsDataProvider(
-            new CsvOperationsParser(
-                DenormalizerFactory::createDenormalizer(),
-                MetadataValidatorFactory::createValidator(),
-                $filePath
-            )
-        );
-
         $command = new CalculateCommissionFeesCommand(
             new NullLogger(),
-            $operationsDataProvider,
+            new OperationsDataProvider(
+                new OperationsParserFactory(
+                    DenormalizerFactory::createMixedOperationDenormalizer(),
+                    DenormalizerFactory::createObjectOperationDenormalizer()
+                )
+            ),
             $this->calculator,
             new ConsoleCommissionFeesWriter($this->output)
         );
 
         $commandTester = new CommandTester($command);
-        $commandTester->execute([]);
+        $commandTester->execute([
+            'file_path' => $filePath,
+            'format' => OperationsParserFactory::CSV_FILE_FORMAT,
+        ]);
         $this->assertEquals($expectedResultCode, $commandTester->getStatusCode());
         $this->assertStringContainsString($expectedMessage, $commandTester->getDisplay());
     }

@@ -9,13 +9,35 @@ use Paysera\Component\Normalization\Registry\GroupedNormalizerRegistryProvider;
 
 class DenormalizerFactory
 {
-    public static function createDenormalizer(): CoreDenormalizer
+    public static function createMixedConfigDenormalizer(): CoreDenormalizer
     {
         $provider = new GroupedNormalizerRegistryProvider();
-        $provider->addTypeAwareNormalizer(new ConfigNormalizer());
-        $provider->addTypeAwareNormalizer(new MoneyNormalizer());
-        $provider->addTypeAwareNormalizer(new OperationNormalizer());
-        $provider->addTypeAwareNormalizer(new ExchangeRatesNormalizer());
+        $provider->addTypeAwareNormalizer(new MixedConfigNormalizer());
+        $provider->addTypeAwareNormalizer(new MixedMoneyNormalizer());
+
+        return new CoreDenormalizer($provider);
+    }
+
+    public static function createObjectExchangeRatesDenormalizer(): CoreDenormalizer
+    {
+        $provider = new GroupedNormalizerRegistryProvider();
+        $provider->addTypeAwareNormalizer(new ObjectExchangeRatesNormalizer());
+
+        return new CoreDenormalizer($provider);
+    }
+
+    public static function createMixedOperationDenormalizer(): CoreDenormalizer
+    {
+        $provider = new GroupedNormalizerRegistryProvider();
+        $provider->addTypeAwareNormalizer(new MixedOperationNormalizer());
+
+        return new CoreDenormalizer($provider);
+    }
+
+    public static function createObjectOperationDenormalizer(): CoreDenormalizer
+    {
+        $provider = new GroupedNormalizerRegistryProvider();
+        $provider->addTypeAwareNormalizer(new ObjectOperationNormalizer());
 
         return new CoreDenormalizer($provider);
     }

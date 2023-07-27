@@ -59,6 +59,7 @@ class CommissionFeeCalculatorTest extends TestCase
      * @param array               $expectedResult
      *
      * @return void
+     * @throws CommissionFeeCalculationFailedException
      */
     public function testCalculate(OperationCollection $operations, array $expectedResult): void
     {

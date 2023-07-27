@@ -4,22 +4,36 @@ declare(strict_types=1);
 
 namespace Ypppa\CommissionFees\Service\InputDataProvider;
 
+use Ypppa\CommissionFees\Exception\InvalidFileFormatException;
 use Ypppa\CommissionFees\Model\Operation\OperationCollection;
+use Ypppa\CommissionFees\Service\Parser\OperationsParserFactory;
 use Ypppa\CommissionFees\Service\Parser\OperationsParserInterface;
 
 class OperationsDataProvider implements OperationsDataProviderInterface
 {
-    private OperationsParserInterface $parser;
+    private OperationsParserFactory $parserFactory;
+    private ?OperationsParserInterface $parser;
     private ?OperationCollection $operations;
 
-    public function __construct(OperationsParserInterface $parser)
+    public function __construct(OperationsParserFactory $parserFactory)
     {
-        $this->parser = $parser;
+        $this->parserFactory = $parserFactory;
+        $this->parser = null;
         $this->operations = null;
     }
 
-    public function getOperations(): OperationCollection
+    /**
+     * @param string $filePath
+     * @param string $format
+     *
+     * @return OperationCollection
+     * @throws InvalidFileFormatException
+     */
+    public function getOperations(string $filePath, string $format): OperationCollection
     {
+        if ($this->parser === null) {
+            $this->parser = $this->parserFactory->getParser($filePath, $format);
+        }
         if ($this->operations === null) {
             $this->load();
         }

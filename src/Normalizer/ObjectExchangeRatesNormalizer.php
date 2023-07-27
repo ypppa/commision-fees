@@ -14,7 +14,7 @@ use Ypppa\CommissionFees\Exception\DenormalizationException;
 use Ypppa\CommissionFees\Model\ExchangeRate\ExchangeRate;
 use Ypppa\CommissionFees\Model\ExchangeRate\ExchangeRates;
 
-class ExchangeRatesNormalizer implements ObjectDenormalizerInterface, TypeAwareInterface
+class ObjectExchangeRatesNormalizer implements ObjectDenormalizerInterface, TypeAwareInterface
 {
     public function getType(): string
     {
