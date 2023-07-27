@@ -53,7 +53,6 @@
             <argument type="service" id="ypppa.commission_fees.core_denormalizer"/>
             <argument type="service" id="ypppa.commission_fees.validator"/>
             <argument>%operations_csv_file_path%</argument>
-            <argument type="service" id="ypppa.commission_fees.console_logger"/>
         </service>
         <service id="ypppa.commission_fees.operations_data_provider"
                  class="Ypppa\CommissionFees\Service\InputDataProvider\OperationsDataProvider">

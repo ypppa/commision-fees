@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace Ypppa\CommissionFees\Normalizer;
 
 use Evp\Component\Money\Money;
+use Evp\Component\Money\MoneyException;
 use Paysera\Component\Normalization\DenormalizationContext;
 use Paysera\Component\Normalization\MixedTypeDenormalizerInterface;
 use Paysera\Component\Normalization\TypeAwareInterface;
 use Paysera\Component\Serializer\Exception\InvalidDataException;
+use Ypppa\CommissionFees\Exception\UnsupportedCurrencyException;
 
 class MoneyNormalizer implements MixedTypeDenormalizerInterface, TypeAwareInterface
 {
@@ -23,6 +25,7 @@ class MoneyNormalizer implements MixedTypeDenormalizerInterface, TypeAwareInterf
      *
      * @return Money
      * @throws InvalidDataException
+     * @throws UnsupportedCurrencyException
      */
     public function denormalize($input, DenormalizationContext $context): Money
     {
@@ -34,6 +37,13 @@ class MoneyNormalizer implements MixedTypeDenormalizerInterface, TypeAwareInterf
             throw new InvalidDataException('Currency is not set');
         }
 
-        return new Money($input['amount'], $input['currency']);
+        try {
+            return new Money($input['amount'], $input['currency']);
+        } catch (MoneyException $moneyException) {
+            if (str_contains($moneyException->getMessage(), 'Unsupported currency')) {
+                throw new UnsupportedCurrencyException($moneyException->getMessage(), $moneyException);
+            }
+            throw $moneyException;
+        }
     }
 }

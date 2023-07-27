@@ -42,7 +42,7 @@ class UrlExchangeRateProvider implements ExchangeRateProviderInterface
      * @param string $currency
      *
      * @return string
-     * @throws RateNotFoundException
+     * @throws RateNotFoundException|ExchangeRatesLoadException
      */
     public function getRate(string $base, string $currency): string
     {

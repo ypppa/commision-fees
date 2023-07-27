@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Ypppa\CommissionFees\Service\Calculator;
 
 use Throwable;
-use Ypppa\CommissionFees\Exception\CalculationFailedException;
+use Ypppa\CommissionFees\Exception\CommissionFeeCalculationFailedException;
 use Ypppa\CommissionFees\Model\Operation\Operation;
 use Ypppa\CommissionFees\Model\Operation\OperationCollection;
 use Ypppa\CommissionFees\Model\User\UserCumulativeOperations;
@@ -29,11 +29,18 @@ class CommissionFeeCalculator
         $this->commissionFeeStrategyFactory = $commissionFeeStrategyFactory;
     }
 
+    /**
+     * @param OperationCollection $operationCollection
+     *
+     * @return OperationCollection
+     * @throws CommissionFeeCalculationFailedException
+     */
     public function calculate(OperationCollection $operationCollection): OperationCollection
     {
-        $operationCollection->sortByUserIdAndDate();
-        $userCumulativeOperations = null;
         try {
+            $operationCollection->sortByUserIdAndDate();
+            $userCumulativeOperations = null;
+
             $iterator = $operationCollection->getIterator();
             foreach ($iterator as $operation) {
                 if ((!$userCumulativeOperations instanceof UserCumulativeOperations
@@ -49,13 +56,12 @@ class CommissionFeeCalculator
                 }
                 $this->handleOne($operation, $userCumulativeOperations);
             }
+            $operationCollection->sortByIndex();
+
+            return $operationCollection;
         } catch (Throwable $exception) {
-            throw new CalculationFailedException($exception);
+            throw new CommissionFeeCalculationFailedException('', null, $exception);
         }
-
-        $operationCollection->sortByIndex();
-
-        return $operationCollection;
     }
 
     private function handleOne(Operation $operation, ?UserCumulativeOperations $userCumulativeOperations): void

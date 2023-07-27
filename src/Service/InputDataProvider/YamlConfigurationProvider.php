@@ -27,6 +27,10 @@ class YamlConfigurationProvider implements ConfigurationProviderInterface
         $this->config = null;
     }
 
+    /**
+     * @return void
+     * @throws ConfigurationLoadException
+     */
     private function load(): void
     {
         try {

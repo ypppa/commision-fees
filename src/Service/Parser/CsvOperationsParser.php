@@ -4,11 +4,16 @@ declare(strict_types=1);
 
 namespace Ypppa\CommissionFees\Service\Parser;
 
+use Evp\Component\Money\MoneyException;
 use Paysera\Component\Normalization\CoreDenormalizer;
-use Psr\Log\LoggerInterface;
+use Paysera\Component\Serializer\Exception\InvalidDataException;
 use Symfony\Component\Validator\Exception\ValidationFailedException;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Throwable;
+use Ypppa\CommissionFees\Exception\CommissionFeeCalculationFailedException;
+use Ypppa\CommissionFees\Exception\InvalidFileFormatException;
+use Ypppa\CommissionFees\Exception\UnsupportedCurrencyException;
+use Ypppa\CommissionFees\Exception\ValidationException;
 use Ypppa\CommissionFees\Model\Operation\Operation;
 use Ypppa\CommissionFees\Model\Operation\OperationCollection;
 
@@ -26,29 +31,38 @@ class CsvOperationsParser implements OperationsParserInterface
     private string $filePath;
     private CoreDenormalizer $denormalizer;
     private ValidatorInterface $validator;
-    private LoggerInterface $logger;
 
     public function __construct(
         CoreDenormalizer $denormalizer,
         ValidatorInterface $validator,
-        string $filePath,
-        LoggerInterface $logger
+        string $filePath
     ) {
         $this->denormalizer = $denormalizer;
         $this->validator = $validator;
         $this->filePath = $filePath;
-        $this->logger = $logger;
     }
 
+    /**
+     * @throws Throwable
+     */
     public function parse(): OperationCollection
     {
         $operations = new OperationCollection();
 
-        $file = fopen($this->filePath, 'r');
+        try {
+            $file = fopen($this->filePath, 'r');
+        } catch (Throwable $exception) {
+            throw new CommissionFeeCalculationFailedException('Failed to open file', null, $exception);
+        }
 
         while (($row = fgetcsv($file)) !== false) {
             try {
                 $operationData = array_combine(self::COLUMN_NAMES, $row);
+            } catch (Throwable $exception) {
+                throw new InvalidFileFormatException($exception);
+            }
+
+            try {
                 $operation = $this->denormalizer->denormalize($operationData, Operation::class);
 
                 $violations = $this->validator->validate($operation);
@@ -57,11 +71,17 @@ class CsvOperationsParser implements OperationsParserInterface
                 }
 
                 $operations->add($operation);
+            } catch (InvalidDataException $invalidDataException) {
+                throw new InvalidFileFormatException($invalidDataException);
+            } catch (ValidationFailedException $validationException) {
+                throw new ValidationException($validationException);
+            } catch (MoneyException $moneyException) {
+                if (str_contains($moneyException->getMessage(), 'Unsupported currency')) {
+                    throw new UnsupportedCurrencyException($moneyException->getMessage(), $moneyException);
+                }
+                throw new CommissionFeeCalculationFailedException(null, null, $moneyException);
             } catch (Throwable $exception) {
-                $this->logger->error($exception);
-                fclose($file);
-
-                throw $exception;
+                throw new CommissionFeeCalculationFailedException(null, null, $exception);
             }
         }
 

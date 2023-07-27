@@ -8,7 +8,7 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Throwable;
+use Ypppa\CommissionFees\Exception\CommissionFeeCalculationFailedException;
 use Ypppa\CommissionFees\Service\Calculator\CommissionFeeCalculator;
 use Ypppa\CommissionFees\Service\InputDataProvider\OperationsDataProviderInterface;
 use Ypppa\CommissionFees\Service\OutputWriter\CommissionFeesWriterInterface;
@@ -49,11 +49,11 @@ class CalculateCommissionFeesCommand extends Command
             $this->outputWriter->write($calculatedOperations);
 
             return Command::SUCCESS;
-        } catch (Throwable $exception) {
-            $this->logger->critical($exception);
-            $output->write('Unexpected error: ' . $exception->getMessage());
+        } catch (CommissionFeeCalculationFailedException $handledException) {
+            $this->logger->critical($handledException);
+            $output->write($handledException->getMessage());
 
-            return 255;
+            return $handledException->getCode();
         }
     }
 }

@@ -10,6 +10,9 @@ use Psr\Log\NullLogger;
 use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\Console\Tester\CommandTester;
 use Ypppa\CommissionFees\Command\CalculateCommissionFeesCommand;
+use Ypppa\CommissionFees\Exception\CommissionFeeCalculationFailedException;
+use Ypppa\CommissionFees\Exception\InvalidFileFormatException;
+use Ypppa\CommissionFees\Exception\UnsupportedCurrencyException;
 use Ypppa\CommissionFees\Model\ExchangeRate\ExchangeRate;
 use Ypppa\CommissionFees\Model\ExchangeRate\ExchangeRates;
 use Ypppa\CommissionFees\Normalizer\DenormalizerFactory;
@@ -25,8 +28,8 @@ use Ypppa\CommissionFees\Validator\MetadataValidatorFactory;
 
 class CalculateCommissionFeesCommandTest extends TestCase
 {
+    private CommissionFeeCalculator $calculator;
     private CalculateCommissionFeesCommand $commandWithSuccess;
-    private CalculateCommissionFeesCommand $commandWithFailure;
     private BufferedOutput $output;
 
     public function setUp(): void
@@ -48,7 +51,7 @@ class CalculateCommissionFeesCommandTest extends TestCase
             new MockExchangeRateProvider($exchangeRates),
             $configurationProvider
         );
-        $calculator = new CommissionFeeCalculator(
+        $this->calculator = new CommissionFeeCalculator(
             $configurationProvider,
             $currencyConverter,
             new CommissionFeeStrategyFactory($configurationProvider, $currencyConverter)
@@ -57,8 +60,7 @@ class CalculateCommissionFeesCommandTest extends TestCase
             new CsvOperationsParser(
                 DenormalizerFactory::createDenormalizer(),
                 MetadataValidatorFactory::createValidator(),
-                'tests/_data/operations.csv',
-                $logger
+                'tests/_data/operations.csv'
             )
         );
 
@@ -66,23 +68,7 @@ class CalculateCommissionFeesCommandTest extends TestCase
         $this->commandWithSuccess = new CalculateCommissionFeesCommand(
             $logger,
             $operationsDataProvider,
-            $calculator,
-            new ConsoleCommissionFeesWriter($this->output)
-        );
-
-        $operationsDataProvider = new OperationsDataProvider(
-            new CsvOperationsParser(
-                (new DenormalizerFactory())->createDenormalizer(),
-                (new MetadataValidatorFactory())->createValidator(),
-                'tests/_data/operations_invalid_format.csv',
-                $logger
-            )
-        );
-
-        $this->commandWithFailure = new CalculateCommissionFeesCommand(
-            $logger,
-            $operationsDataProvider,
-            $calculator,
+            $this->calculator,
             new ConsoleCommissionFeesWriter($this->output)
         );
     }
@@ -113,11 +99,56 @@ class CalculateCommissionFeesCommandTest extends TestCase
         );
     }
 
-    public function testCommandFailure(): void
+    /**
+     * @dataProvider exceptionProvider
+     *
+     * @param string $filePath
+     * @param int    $expectedResultCode
+     * @param string $expectedMessage
+     *
+     * @return void
+     */
+    public function testExceptions(string $filePath, int $expectedResultCode, string $expectedMessage): void
     {
-        $commandTester = new CommandTester($this->commandWithFailure);
+        $operationsDataProvider = new OperationsDataProvider(
+            new CsvOperationsParser(
+                DenormalizerFactory::createDenormalizer(),
+                MetadataValidatorFactory::createValidator(),
+                $filePath
+            )
+        );
+
+        $command = new CalculateCommissionFeesCommand(
+            new NullLogger(),
+            $operationsDataProvider,
+            $this->calculator,
+            new ConsoleCommissionFeesWriter($this->output)
+        );
+
+        $commandTester = new CommandTester($command);
         $commandTester->execute([]);
-        $this->assertEquals(255, $commandTester->getStatusCode());
-        $this->assertStringContainsString('Unexpected error', $commandTester->getDisplay());
+        $this->assertEquals($expectedResultCode, $commandTester->getStatusCode());
+        $this->assertStringContainsString($expectedMessage, $commandTester->getDisplay());
+    }
+
+    public function exceptionProvider(): array
+    {
+        return [
+            'Unsupported currency' => [
+                'filePath' => 'tests/_data/operations_unsupported_currency.csv',
+                'expectedResultCode' => UnsupportedCurrencyException::UNSUPPORTED_CURRENCY_ERROR_CODE,
+                'expectedMessage' => 'Unsupported currency',
+            ],
+            'Invalid file format' => [
+                'filePath' => 'tests/_data/operations_invalid_format.csv',
+                'expectedResultCode' => InvalidFileFormatException::INVALID_FILE_FORMAT_ERROR_CODE,
+                'expectedMessage' => 'Invalid file format',
+            ],
+            'Base exception' => [
+                'filePath' => 'tests/_data/operations_unexpected_error.csv',
+                'expectedResultCode' => CommissionFeeCalculationFailedException::UNEXPECTED_ERROR_CODE,
+                'expectedMessage' => 'Commission fees calculation failed',
+            ],
+        ];
     }
 }

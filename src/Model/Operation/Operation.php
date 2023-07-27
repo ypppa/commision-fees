@@ -41,19 +41,49 @@ class Operation
 
     public static function loadValidatorMetadata(ClassMetadata $metadata): void
     {
-        $metadata->addPropertyConstraint('date', new Assert\NotBlank())
-            ->addPropertyConstraint('userId', new Assert\NotBlank())
-            ->addPropertyConstraint('userType', new Assert\NotBlank())
+        $metadata
+            ->addPropertyConstraint(
+                'date',
+                new Assert\NotBlank(null, 'date field is required')
+            )
+            ->addPropertyConstraint(
+                'userId',
+                new Assert\NotBlank(null, 'userId field is required')
+            )
             ->addPropertyConstraint(
                 'userType',
-                new Assert\Choice([self::USER_TYPE_PRIVATE, self::USER_TYPE_BUSINESS])
+                new Assert\NotBlank(null, 'userType field is required')
             )
-            ->addPropertyConstraint('operationType', new Assert\NotBlank())
+            ->addPropertyConstraint(
+                'userType',
+                new Assert\Choice(
+                    [
+                        self::USER_TYPE_PRIVATE,
+                        self::USER_TYPE_BUSINESS,
+                    ],
+                    null, null, null, null, null, null,
+                    'userType is invalid'
+                )
+            )
             ->addPropertyConstraint(
                 'operationType',
-                new Assert\Choice([self::OPERATION_TYPE_DEPOSIT, self::OPERATION_TYPE_WITHDRAW])
+                new Assert\NotBlank(null, 'operationType field is required')
             )
-            ->addPropertyConstraint('operationAmount', new Assert\NotBlank())
+            ->addPropertyConstraint(
+                'operationType',
+                new Assert\Choice(
+                    [
+                        self::OPERATION_TYPE_DEPOSIT,
+                        self::OPERATION_TYPE_WITHDRAW,
+                    ],
+                    null, null, null, null, null, null,
+                    'operationType is invalid'
+                )
+            )
+            ->addPropertyConstraint(
+                'operationAmount',
+                new Assert\NotBlank(null, 'operationAmount field is required')
+            )
         ;
     }
 

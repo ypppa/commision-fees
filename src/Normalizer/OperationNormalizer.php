@@ -11,7 +11,6 @@ use Paysera\Component\Normalization\MixedTypeDenormalizerInterface;
 use Paysera\Component\Normalization\TypeAwareInterface;
 use Paysera\Component\Serializer\Exception\InvalidDataException;
 use Throwable;
-use Ypppa\CommissionFees\Exception\DateParseException;
 use Ypppa\CommissionFees\Model\Operation\Operation;
 
 class OperationNormalizer implements MixedTypeDenormalizerInterface, TypeAwareInterface
@@ -27,7 +26,6 @@ class OperationNormalizer implements MixedTypeDenormalizerInterface, TypeAwareIn
      *
      * @return Operation
      * @throws InvalidDataException
-     * @throws DateParseException
      */
     public function denormalize($input, DenormalizationContext $context): Operation
     {
@@ -58,7 +56,7 @@ class OperationNormalizer implements MixedTypeDenormalizerInterface, TypeAwareIn
         try {
             $operationDate = new DateTimeImmutable($input['date']);
         } catch (Throwable $exception) {
-            throw new DateParseException($exception);
+            throw new InvalidDataException('Bad date format', 0, $exception);
         }
 
         return new Operation(

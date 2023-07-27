@@ -7,7 +7,7 @@ namespace Ypppa\CommissionFees\Tests\Functional\Service\Calculator;
 use DateTimeImmutable;
 use Evp\Component\Money\Money;
 use PHPUnit\Framework\TestCase;
-use Ypppa\CommissionFees\Exception\CalculationFailedException;
+use Ypppa\CommissionFees\Exception\CommissionFeeCalculationFailedException;
 use Ypppa\CommissionFees\Model\Config\Config;
 use Ypppa\CommissionFees\Model\ExchangeRate\ExchangeRate;
 use Ypppa\CommissionFees\Model\ExchangeRate\ExchangeRates;
@@ -217,7 +217,7 @@ class CommissionFeeCalculatorTest extends TestCase
      */
     public function testCalculateWithFailure(OperationCollection $operations): void
     {
-        $this->expectException(CalculationFailedException::class);
+        $this->expectException(CommissionFeeCalculationFailedException::class);
         $this->calculator->calculate($operations);
     }
 
