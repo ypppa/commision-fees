@@ -42,9 +42,11 @@ class UserCumulativeOperations
         return $this->date->modify('Monday this week')->format('YYYY-mm-dd');
     }
 
-    public function add(Money $amount): void
+    public function add(Money $amount): self
     {
         $this->count++;
         $this->amount = $this->amount->add($amount);
+
+        return $this;
     }
 }

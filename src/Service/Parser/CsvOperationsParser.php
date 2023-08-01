@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ypppa\CommissionFees\Service\Parser;
 
 use Evp\Component\Money\MoneyException;
+use Generator;
 use Paysera\Component\Normalization\CoreDenormalizer;
 use Paysera\Component\Serializer\Exception\InvalidDataException;
 use Symfony\Component\Validator\Exception\ValidationFailedException;
@@ -14,7 +15,6 @@ use Ypppa\CommissionFees\Exception\InvalidFileFormatException;
 use Ypppa\CommissionFees\Exception\UnsupportedCurrencyException;
 use Ypppa\CommissionFees\Exception\ValidationException;
 use Ypppa\CommissionFees\Model\Operation\Operation;
-use Ypppa\CommissionFees\Model\Operation\OperationCollection;
 use Ypppa\CommissionFees\Validator\MetadataValidatorFactory;
 
 class CsvOperationsParser implements OperationsParserInterface
@@ -38,15 +38,14 @@ class CsvOperationsParser implements OperationsParserInterface
     }
 
     /**
-     * @return OperationCollection
+     * @return Generator
      * @throws CommissionFeeCalculationFailedException
      * @throws InvalidFileFormatException
      * @throws UnsupportedCurrencyException
+     * @throws ValidationException
      */
-    public function parse(): OperationCollection
+    public function parse(): Generator
     {
-        $operations = new OperationCollection();
-
         try {
             $file = fopen($this->filePath, 'r');
         } catch (Throwable $exception) {
@@ -70,7 +69,7 @@ class CsvOperationsParser implements OperationsParserInterface
                     throw new ValidationFailedException($operation, $violations);
                 }
 
-                $operations->add($operation);
+                yield $operation;
             } catch (InvalidDataException $invalidDataException) {
                 throw new InvalidFileFormatException($invalidDataException);
             } catch (ValidationFailedException $validationException) {
@@ -86,7 +85,5 @@ class CsvOperationsParser implements OperationsParserInterface
         }
 
         fclose($file);
-
-        return $operations;
     }
 }

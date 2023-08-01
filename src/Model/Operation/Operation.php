@@ -16,7 +16,6 @@ class Operation
     public const OPERATION_TYPE_DEPOSIT = 'deposit';
     public const OPERATION_TYPE_WITHDRAW = 'withdraw';
 
-    private int $index;
     private DateTimeImmutable $date;
     private string $userId;
     private string $userType;
@@ -147,15 +146,5 @@ class Operation
     public function isWithdraw(): bool
     {
         return $this->operationType === self::OPERATION_TYPE_WITHDRAW;
-    }
-
-    public function getIndex(): int
-    {
-        return $this->index;
-    }
-
-    public function setIndex(int $index): void
-    {
-        $this->index = $index;
     }
 }

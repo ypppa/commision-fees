@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Ypppa\CommissionFees\Service\OutputWriter;
 
 use Symfony\Component\Console\Output\OutputInterface;
-use Ypppa\CommissionFees\Model\Operation\OperationCollection;
+use Ypppa\CommissionFees\Model\Operation\Operation;
 
 class ConsoleCommissionFeesWriter implements CommissionFeesWriterInterface
 {
@@ -16,11 +16,8 @@ class ConsoleCommissionFeesWriter implements CommissionFeesWriterInterface
         $this->output = $output;
     }
 
-    public function write(OperationCollection $operations): void
+    public function write(Operation $operation): void
     {
-        $operations->sortByIndex();
-        foreach ($operations as $operation) {
-            $this->output->writeln($operation->getCommissionFee()->formatAmount());
-        }
+        $this->output->writeln($operation->getCommissionFee()->formatAmount());
     }
 }

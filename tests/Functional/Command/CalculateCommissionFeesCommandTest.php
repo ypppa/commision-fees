@@ -22,12 +22,15 @@ use Ypppa\CommissionFees\Service\Calculator\CommissionFeeCalculator;
 use Ypppa\CommissionFees\Service\Calculator\Strategy\CommissionFeeStrategyFactory;
 use Ypppa\CommissionFees\Service\CurrencyConverter\CurrencyConverter;
 use Ypppa\CommissionFees\Service\ExchangeRateProvider\MockExchangeRateProvider;
-use Ypppa\CommissionFees\Service\InputDataProvider\OperationsDataProvider;
 use Ypppa\CommissionFees\Service\InputDataProvider\YamlConfigurationProvider;
+use Ypppa\CommissionFees\Service\Manager\UserHistoryManager;
 use Ypppa\CommissionFees\Service\OutputWriter\ConsoleCommissionFeesWriter;
 use Ypppa\CommissionFees\Service\Parser\OperationsParserFactory;
 use Ypppa\CommissionFees\Validator\MetadataValidatorFactory;
 
+/**
+ * @codeCoverageIgnore
+ */
 class CalculateCommissionFeesCommandTest extends TestCase
 {
     private CommissionFeeCalculator $calculator;
@@ -56,19 +59,18 @@ class CalculateCommissionFeesCommandTest extends TestCase
         $this->calculator = new CommissionFeeCalculator(
             $configurationProvider,
             $currencyConverter,
-            new CommissionFeeStrategyFactory($configurationProvider, $currencyConverter)
+            new CommissionFeeStrategyFactory($configurationProvider, $currencyConverter),
+            new UserHistoryManager()
         );
-        $operationsDataProvider = new OperationsDataProvider(
-            new OperationsParserFactory(
-                DenormalizerFactory::createMixedOperationDenormalizer(),
-                DenormalizerFactory::createObjectOperationDenormalizer()
-            )
+        $operationsParserFactory = new OperationsParserFactory(
+            DenormalizerFactory::createMixedOperationDenormalizer(),
+            DenormalizerFactory::createObjectOperationDenormalizer()
         );
 
         $this->output = new BufferedOutput();
         $this->commandWithSuccess = new CalculateCommissionFeesCommand(
             $logger,
-            $operationsDataProvider,
+            $operationsParserFactory,
             $this->calculator,
             new ConsoleCommissionFeesWriter($this->output)
         );
@@ -103,6 +105,25 @@ class CalculateCommissionFeesCommandTest extends TestCase
         );
     }
 
+    public function testCommandOperationsOrder(): void
+    {
+        $commandTester = new CommandTester($this->commandWithSuccess);
+        $commandTester->execute([
+            'file_path' => 'tests/_data/operations_order.csv',
+            'format' => OperationsParserFactory::CSV_FILE_FORMAT,
+        ]);
+        $commandTester->assertCommandIsSuccessful();
+        $this->assertEquals(
+            implode(chr(10), [
+                '0.60',
+                '0.60',
+                '3.60',
+                '',
+            ]),
+            $this->output->fetch()
+        );
+    }
+
     /**
      * @dataProvider exceptionProvider
      *
@@ -116,11 +137,9 @@ class CalculateCommissionFeesCommandTest extends TestCase
     {
         $command = new CalculateCommissionFeesCommand(
             new NullLogger(),
-            new OperationsDataProvider(
-                new OperationsParserFactory(
-                    DenormalizerFactory::createMixedOperationDenormalizer(),
-                    DenormalizerFactory::createObjectOperationDenormalizer()
-                )
+            new OperationsParserFactory(
+                DenormalizerFactory::createMixedOperationDenormalizer(),
+                DenormalizerFactory::createObjectOperationDenormalizer()
             ),
             $this->calculator,
             new ConsoleCommissionFeesWriter($this->output)

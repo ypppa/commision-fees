@@ -7,78 +7,63 @@ namespace Ypppa\CommissionFees\Service\Calculator;
 use Throwable;
 use Ypppa\CommissionFees\Exception\CommissionFeeCalculationFailedException;
 use Ypppa\CommissionFees\Model\Operation\Operation;
-use Ypppa\CommissionFees\Model\Operation\OperationCollection;
-use Ypppa\CommissionFees\Model\User\UserCumulativeOperations;
 use Ypppa\CommissionFees\Service\Calculator\Strategy\CommissionFeeStrategyFactory;
 use Ypppa\CommissionFees\Service\CurrencyConverter\CurrencyConverter;
 use Ypppa\CommissionFees\Service\InputDataProvider\ConfigurationProviderInterface;
+use Ypppa\CommissionFees\Service\Manager\UserHistoryManager;
 
 class CommissionFeeCalculator
 {
     private ConfigurationProviderInterface $configurationProvider;
     private CurrencyConverter $currencyConverter;
     private CommissionFeeStrategyFactory $commissionFeeStrategyFactory;
+    private UserHistoryManager $userHistoryManager;
 
     public function __construct(
         ConfigurationProviderInterface $configurationProvider,
         CurrencyConverter $currencyConverter,
         CommissionFeeStrategyFactory $commissionFeeStrategyFactory,
+        UserHistoryManager $userHistoryManager
     ) {
         $this->configurationProvider = $configurationProvider;
         $this->currencyConverter = $currencyConverter;
         $this->commissionFeeStrategyFactory = $commissionFeeStrategyFactory;
+        $this->userHistoryManager = $userHistoryManager;
     }
 
     /**
-     * @param OperationCollection $operationCollection
+     * @param Operation $operation
      *
-     * @return OperationCollection
+     * @return Operation
      * @throws CommissionFeeCalculationFailedException
      */
-    public function calculate(OperationCollection $operationCollection): OperationCollection
+    public function calculate(Operation $operation): Operation
     {
         try {
-            $operationCollection->sortByUserIdAndDate();
-            $userCumulativeOperations = null;
+            $userCumulativeOperations = $this->userHistoryManager->get(
+                $operation->getUserId(),
+                $this->configurationProvider->getConfig()->getPrivateFreeWithdrawAmount()->getCurrency(),
+                $operation->getDate()
+            );
 
-            $iterator = $operationCollection->getIterator();
-            foreach ($iterator as $operation) {
-                if ((!$userCumulativeOperations instanceof UserCumulativeOperations
-                        || $userCumulativeOperations->getUserId() !== $operation->getUserId()
-                        || $userCumulativeOperations->getStartOfWeek() !== $operation->getStartOfWeek())
-                    && $operation->isWithdraw()
-                ) {
-                    $userCumulativeOperations = new UserCumulativeOperations(
-                        $operation->getUserId(),
-                        $this->configurationProvider->getConfig()->getPrivateFreeWithdrawAmount()->getCurrency(),
-                        $operation->getDate()
-                    );
-                }
-                $this->handleOne($operation, $userCumulativeOperations);
+            $strategy = $this->commissionFeeStrategyFactory->getStrategy($operation);
+            $commissionFee = $strategy->calculateCommissionFee(
+                $operation,
+                $userCumulativeOperations
+            );
+            $operation->setCommissionFee($commissionFee);
+
+            if ($operation->isWithdraw()) {
+                $convertedAmount = $this->currencyConverter->convert(
+                    $operation->getOperationAmount(),
+                    $this->configurationProvider->getConfig()->getPrivateFreeWithdrawAmount()->getCurrency(),
+                );
+                $userCumulativeOperations->add($convertedAmount);
             }
-            $operationCollection->sortByIndex();
 
-            return $operationCollection;
+            return $operation;
         } catch (Throwable $exception) {
             throw new CommissionFeeCalculationFailedException('', null, $exception);
-        }
-    }
-
-    private function handleOne(Operation $operation, ?UserCumulativeOperations $userCumulativeOperations): void
-    {
-        $strategy = $this->commissionFeeStrategyFactory->getStrategy($operation);
-        $commissionFee = $strategy->calculateCommissionFee(
-            $operation,
-            $userCumulativeOperations
-        );
-        $operation->setCommissionFee($commissionFee);
-
-        if ($operation->isWithdraw()) {
-            $convertedAmount = $this->currencyConverter->convert(
-                $operation->getOperationAmount(),
-                $this->configurationProvider->getConfig()->getPrivateFreeWithdrawAmount()->getCurrency(),
-            );
-            $userCumulativeOperations->add($convertedAmount);
         }
     }
 }

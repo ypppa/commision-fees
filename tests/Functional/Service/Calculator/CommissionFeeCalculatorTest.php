@@ -12,12 +12,12 @@ use Ypppa\CommissionFees\Model\Config\Config;
 use Ypppa\CommissionFees\Model\ExchangeRate\ExchangeRate;
 use Ypppa\CommissionFees\Model\ExchangeRate\ExchangeRates;
 use Ypppa\CommissionFees\Model\Operation\Operation;
-use Ypppa\CommissionFees\Model\Operation\OperationCollection;
 use Ypppa\CommissionFees\Service\Calculator\CommissionFeeCalculator;
 use Ypppa\CommissionFees\Service\Calculator\Strategy\CommissionFeeStrategyFactory;
 use Ypppa\CommissionFees\Service\CurrencyConverter\CurrencyConverter;
 use Ypppa\CommissionFees\Service\ExchangeRateProvider\MockExchangeRateProvider;
 use Ypppa\CommissionFees\Service\InputDataProvider\ConfigurationProviderInterface;
+use Ypppa\CommissionFees\Service\Manager\UserHistoryManager;
 
 /**
  * @codeCoverageIgnore
@@ -44,182 +44,166 @@ class CommissionFeeCalculatorTest extends TestCase
             ->addRate(new ExchangeRate('JPY', '129.53'))
             ->addRate(new ExchangeRate('USD', '1.1497'))
         ;
-        $currencyConverter = new CurrencyConverter(new MockExchangeRateProvider($exchangeRates), $configurationProvider);
+        $currencyConverter = new CurrencyConverter(
+            new MockExchangeRateProvider($exchangeRates),
+            $configurationProvider
+        );
         $this->calculator = new CommissionFeeCalculator(
             $configurationProvider,
             $currencyConverter,
-            new CommissionFeeStrategyFactory($configurationProvider, $currencyConverter)
+            new CommissionFeeStrategyFactory($configurationProvider, $currencyConverter),
+            new UserHistoryManager()
         );
     }
 
     /**
      * @dataProvider calculateProvider
      *
-     * @param OperationCollection $operations
-     * @param array               $expectedResult
+     * @param Operation[] $operations
+     * @param array       $expectedResult
      *
      * @return void
      * @throws CommissionFeeCalculationFailedException
      */
-    public function testCalculate(OperationCollection $operations, array $expectedResult): void
+    public function testCalculate(array $operations, array $expectedResult): void
     {
-        $calculatedOperations = $this->calculator->calculate($operations);
         $commissionFees = [];
-        foreach ($calculatedOperations as $operation) {
-            $commissionFees[] = $operation->getCommissionFee()->formatAmount();
+        foreach ($operations as $operation) {
+            $calculatedOperation = $this->calculator->calculate($operation);
+            $commissionFees[] = $calculatedOperation->getCommissionFee()->formatAmount();
         }
+
         $this->assertEquals($expectedResult, $commissionFees);
     }
 
+    /**
+     * @throws CommissionFeeCalculationFailedException
+     */
     public function testCommissionFeeCurrency(): void
     {
-        $calculatedOperations = $this->calculator->calculate($this->getExampleOperations());
-        foreach ($calculatedOperations as $operation) {
+        foreach ($this->getExampleOperations() as $operation) {
+            $calculatedOperation = $this->calculator->calculate($operation);
             $this->assertEquals(
-                $operation->getOperationAmount()->getCurrency(),
-                $operation->getCommissionFee()->getCurrency()
+                $calculatedOperation->getOperationAmount()->getCurrency(),
+                $calculatedOperation->getCommissionFee()->getCurrency()
             );
         }
     }
 
-    private function getExampleOperations(): OperationCollection
+    /**
+     * @return Operation[]
+     */
+    private function getExampleOperations(): array
     {
-        $operationCollection = new OperationCollection();
+        return [
+            new Operation(
+                new DateTimeImmutable('2014-12-31'),
+                '4',
+                'private',
+                'withdraw',
+                new Money('1200.00', 'EUR')
+            ),
 
-        $operationCollection
-            ->add(
-                new Operation(
-                    new DateTimeImmutable('2014-12-31'),
-                    '4',
-                    'private',
-                    'withdraw',
-                    new Money('1200.00', 'EUR')
-                )
-            )
-            ->add(
-                new Operation(
-                    new DateTimeImmutable('2015-01-01'),
-                    '4',
-                    'private',
-                    'withdraw',
-                    new Money('1000.00', 'EUR')
-                )
-            )
-            ->add(
-                new Operation(
-                    new DateTimeImmutable('2016-01-05'),
-                    '4',
-                    'private',
-                    'withdraw',
-                    new Money('1000.00', 'EUR')
-                )
-            )
-            ->add(
-                new Operation(
-                    new DateTimeImmutable('2016-01-05'),
-                    '1',
-                    'private',
-                    'deposit',
-                    new Money('200.00', 'EUR')
-                )
-            )
-            ->add(
-                new Operation(
-                    new DateTimeImmutable('2016-01-06'),
-                    '2',
-                    'business',
-                    'withdraw',
-                    new Money('300.00', 'EUR')
-                )
-            )
-            ->add(
-                new Operation(
-                    new DateTimeImmutable('2016-01-06'),
-                    '1',
-                    'private',
-                    'withdraw',
-                    new Money('30000', 'JPY')
-                )
-            )
-            ->add(
-                new Operation(
-                    new DateTimeImmutable('2016-01-07'),
-                    '1',
-                    'private',
-                    'withdraw',
-                    new Money('1000.00', 'EUR')
-                )
-            )
-            ->add(
-                new Operation(
-                    new DateTimeImmutable('2016-01-07'),
-                    '1',
-                    'private',
-                    'withdraw',
-                    new Money('100.00', 'USD')
-                )
-            )
-            ->add(
-                new Operation(
-                    new DateTimeImmutable('2016-01-10'),
-                    '1',
-                    'private',
-                    'withdraw',
-                    new Money('100.00', 'EUR')
-                )
-            )
-            ->add(
-                new Operation(
-                    new DateTimeImmutable('2016-01-10'),
-                    '2',
-                    'business',
-                    'deposit',
-                    new Money('10000.00', 'EUR')
-                )
-            )
-            ->add(
-                new Operation(
-                    new DateTimeImmutable('2016-01-10'),
-                    '3',
-                    'private',
-                    'withdraw',
-                    new Money('1000.00', 'EUR')
-                )
-            )
-            ->add(
-                new Operation(
-                    new DateTimeImmutable('2016-02-15'),
-                    '1',
-                    'private',
-                    'withdraw',
-                    new Money('300.00', 'EUR')
-                )
-            )
-            ->add(
-                new Operation(
-                    new DateTimeImmutable('2016-02-19'),
-                    '5',
-                    'private',
-                    'withdraw',
-                    new Money('3000000', 'JPY')
-                )
-            )
-        ;
-
-        return $operationCollection;
+            new Operation(
+                new DateTimeImmutable('2015-01-01'),
+                '4',
+                'private',
+                'withdraw',
+                new Money('1000.00', 'EUR')
+            ),
+            new Operation(
+                new DateTimeImmutable('2016-01-05'),
+                '4',
+                'private',
+                'withdraw',
+                new Money('1000.00', 'EUR')
+            ),
+            new Operation(
+                new DateTimeImmutable('2016-01-05'),
+                '1',
+                'private',
+                'deposit',
+                new Money('200.00', 'EUR')
+            ),
+            new Operation(
+                new DateTimeImmutable('2016-01-06'),
+                '2',
+                'business',
+                'withdraw',
+                new Money('300.00', 'EUR')
+            ),
+            new Operation(
+                new DateTimeImmutable('2016-01-06'),
+                '1',
+                'private',
+                'withdraw',
+                new Money('30000', 'JPY')
+            ),
+            new Operation(
+                new DateTimeImmutable('2016-01-07'),
+                '1',
+                'private',
+                'withdraw',
+                new Money('1000.00', 'EUR')
+            ),
+            new Operation(
+                new DateTimeImmutable('2016-01-07'),
+                '1',
+                'private',
+                'withdraw',
+                new Money('100.00', 'USD')
+            ),
+            new Operation(
+                new DateTimeImmutable('2016-01-10'),
+                '1',
+                'private',
+                'withdraw',
+                new Money('100.00', 'EUR')
+            ),
+            new Operation(
+                new DateTimeImmutable('2016-01-10'),
+                '2',
+                'business',
+                'deposit',
+                new Money('10000.00', 'EUR')
+            ),
+            new Operation(
+                new DateTimeImmutable('2016-01-10'),
+                '3',
+                'private',
+                'withdraw',
+                new Money('1000.00', 'EUR')
+            ),
+            new Operation(
+                new DateTimeImmutable('2016-02-15'),
+                '1',
+                'private',
+                'withdraw',
+                new Money('300.00', 'EUR')
+            ),
+            new Operation(
+                new DateTimeImmutable('2016-02-19'),
+                '5',
+                'private',
+                'withdraw',
+                new Money('3000000', 'JPY')
+            ),
+        ];
     }
 
     /**
      * @dataProvider calculateWithFailureProvider
      *
-     * @param OperationCollection $operations
+     * @param Operation[] $operations
      *
      * @return void
      */
-    public function testCalculateWithFailure(OperationCollection $operations): void
+    public function testCalculateWithFailure(array $operations): void
     {
         $this->expectException(CommissionFeeCalculationFailedException::class);
-        $this->calculator->calculate($operations);
+        foreach ($operations as $operation) {
+            $this->calculator->calculate($operation);
+        }
     }
 
     public function calculateProvider(): array
@@ -244,7 +228,7 @@ class CommissionFeeCalculatorTest extends TestCase
                 ],
             ],
             'empty data check' => [
-                'operations' => new OperationCollection(),
+                'operations' => [],
                 'expectedResult' => [],
             ],
             'deposit one operation' => [
@@ -256,21 +240,20 @@ class CommissionFeeCalculatorTest extends TestCase
         ];
     }
 
-    private function getDepositOneOperations(): OperationCollection
+    /**
+     * @return Operation[]
+     */
+    private function getDepositOneOperations(): array
     {
-        $operationCollection = new OperationCollection();
-
-        $operationCollection->add(
+        return [
             new Operation(
                 new DateTimeImmutable('2016-01-05'),
                 '1',
                 'private',
                 'deposit',
                 new Money('1000.00', 'EUR')
-            )
-        );
-
-        return $operationCollection;
+            ),
+        ];
     }
 
     public function calculateWithFailureProvider(): array
@@ -282,20 +265,19 @@ class CommissionFeeCalculatorTest extends TestCase
         ];
     }
 
-    private function getMissingExchangeRateOperations(): OperationCollection
+    /**
+     * @return Operation[]
+     */
+    private function getMissingExchangeRateOperations(): array
     {
-        $operationCollection = new OperationCollection();
-
-        $operationCollection->add(
+        return [
             new Operation(
                 new DateTimeImmutable('2016-01-05'),
                 '1',
                 'private',
                 'withdraw',
                 new Money('1000.00', 'CAD')
-            )
-        );
-
-        return $operationCollection;
+            ),
+        ];
     }
 }

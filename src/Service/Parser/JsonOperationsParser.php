@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ypppa\CommissionFees\Service\Parser;
 
 use Evp\Component\Money\MoneyException;
+use Generator;
 use Paysera\Component\Normalization\CoreDenormalizer;
 use Symfony\Component\Validator\Exception\ValidationFailedException;
 use Throwable;
@@ -12,7 +13,6 @@ use Ypppa\CommissionFees\Exception\CommissionFeeCalculationFailedException;
 use Ypppa\CommissionFees\Exception\InvalidFileFormatException;
 use Ypppa\CommissionFees\Exception\UnsupportedCurrencyException;
 use Ypppa\CommissionFees\Model\Operation\Operation;
-use Ypppa\CommissionFees\Model\Operation\OperationCollection;
 use Ypppa\CommissionFees\Validator\MetadataValidatorFactory;
 
 class JsonOperationsParser implements OperationsParserInterface
@@ -27,15 +27,13 @@ class JsonOperationsParser implements OperationsParserInterface
     }
 
     /**
-     * @return OperationCollection
+     * @return Generator
      * @throws CommissionFeeCalculationFailedException
      * @throws InvalidFileFormatException
      * @throws UnsupportedCurrencyException
      */
-    public function parse(): OperationCollection
+    public function parse(): Generator
     {
-        $operations = new OperationCollection();
-
         $validator = MetadataValidatorFactory::createValidator();
         $json = file_get_contents($this->filePath);
         $objectArray = json_decode($json);
@@ -48,7 +46,7 @@ class JsonOperationsParser implements OperationsParserInterface
                     throw new ValidationFailedException($operation, $violations);
                 }
 
-                $operations->add($operation);
+                yield $operation;
             } catch (ValidationFailedException $invalidDataException) {
                 throw new InvalidFileFormatException($invalidDataException);
             } catch (MoneyException $moneyException) {
@@ -60,7 +58,5 @@ class JsonOperationsParser implements OperationsParserInterface
                 throw new CommissionFeeCalculationFailedException('', null, $exception);
             }
         }
-
-        return $operations;
     }
 }

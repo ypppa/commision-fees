@@ -11,28 +11,28 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Ypppa\CommissionFees\Exception\CommissionFeeCalculationFailedException;
 use Ypppa\CommissionFees\Service\Calculator\CommissionFeeCalculator;
-use Ypppa\CommissionFees\Service\InputDataProvider\OperationsDataProviderInterface;
 use Ypppa\CommissionFees\Service\OutputWriter\CommissionFeesWriterInterface;
+use Ypppa\CommissionFees\Service\Parser\OperationsParserFactory;
 
 class CalculateCommissionFeesCommand extends Command
 {
     protected static $defaultDescription = 'Calculate transactions\' commission fees.';
     protected static $defaultName = 'app:calc-commissions';
     private LoggerInterface $logger;
-    private OperationsDataProviderInterface $operationsDataProvider;
+    private OperationsParserFactory $parserFactory;
     private CommissionFeeCalculator $calculator;
     private CommissionFeesWriterInterface $outputWriter;
 
     public function __construct(
         LoggerInterface $logger,
-        OperationsDataProviderInterface $operationsDataProvider,
+        OperationsParserFactory $operationsParser,
         CommissionFeeCalculator $calculator,
         CommissionFeesWriterInterface $outputWriter
     ) {
 
         parent::__construct();
         $this->logger = $logger;
-        $this->operationsDataProvider = $operationsDataProvider;
+        $this->parserFactory = $operationsParser;
         $this->calculator = $calculator;
         $this->outputWriter = $outputWriter;
     }
@@ -51,11 +51,12 @@ class CalculateCommissionFeesCommand extends Command
         try {
             $filePath = $input->getArgument('file_path');
             $format = $input->getArgument('format');
-            $calculatedOperations = $this->calculator->calculate(
-                $this->operationsDataProvider->getOperations($filePath, $format)
-            );
+            $parser = $this->parserFactory->getParser($filePath, $format);
+            foreach ($parser->parse() as $operation) {
+                $calculatedOperation = $this->calculator->calculate($operation);
 
-            $this->outputWriter->write($calculatedOperations);
+                $this->outputWriter->write($calculatedOperation);
+            }
 
             return Command::SUCCESS;
         } catch (CommissionFeeCalculationFailedException $handledException) {
