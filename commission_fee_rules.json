@@ -1,0 +1,86 @@
+[
+    {
+        "user_id": null,
+        "user_type": null,
+        "operation_type": "deposit",
+        "free_operations_count_limit": null,
+        "free_operations_amount_limit": null,
+        "commission": "0.0003",
+        "commission_fee_min": null,
+        "commission_fee_max": null
+    },
+    {
+        "user_id": null,
+        "user_type": "private",
+        "operation_type": "withdraw",
+        "free_operations_count_limit": 3,
+        "free_operations_amount_limit": {
+            "amount": "1000",
+            "currency": "EUR"
+        },
+        "commission": "0.003",
+        "commission_fee_min": null,
+        "commission_fee_max": null
+    },
+    {
+        "user_id": null,
+        "user_type": "business",
+        "operation_type": "withdraw",
+        "free_operations_count_limit": null,
+        "free_operations_amount_limit": null,
+        "commission": "0.005",
+        "commission_fee_min": null,
+        "commission_fee_max": null
+    },
+    {
+        "user_id": [
+            "1111"
+        ],
+        "user_type": null,
+        "operation_type": null,
+        "free_operations_count_limit": 10,
+        "free_operations_amount_limit": {
+            "amount": "1000",
+            "currency": "EUR"
+        },
+        "commission": "0.005",
+        "commission_fee_min": null,
+        "commission_fee_max": {
+            "amount": "10",
+            "currency": "EUR"
+        }
+    },
+    {
+        "user_id": [
+            "111"
+        ],
+        "user_type": null,
+        "operation_type": null,
+        "free_operations_count_limit": null,
+        "free_operations_amount_limit": null,
+        "commission": "0",
+        "commission_fee_min": {
+            "amount": "0.5",
+            "currency": "EUR"
+        },
+        "commission_fee_max": null
+    },
+    {
+        "user_id": [
+            "11"
+        ],
+        "user_type": null,
+        "operation_type": null,
+        "free_operations_count_limit": 2,
+        "free_operations_amount_limit": {
+            "amount": "200",
+            "currency": "EUR"
+        },
+        "commission": "0.03",
+        "commission_fee_min": null,
+        "commission_fee_max": {
+            "amount": "13",
+            "currency": "EUR"
+        }
+    }
+]

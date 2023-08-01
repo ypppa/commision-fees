@@ -41,4 +41,12 @@ class DenormalizerFactory
 
         return new CoreDenormalizer($provider);
     }
+
+    public static function createObjectCommissionRuleDenormalizer(): CoreDenormalizer
+    {
+        $provider = new GroupedNormalizerRegistryProvider();
+        $provider->addTypeAwareNormalizer(new ObjectCommissionRuleNormalizer());
+
+        return new CoreDenormalizer($provider);
+    }
 }

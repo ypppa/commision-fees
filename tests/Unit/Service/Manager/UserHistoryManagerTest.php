@@ -28,7 +28,7 @@ class UserHistoryManagerTest extends TestCase
     public function testGet(array $history, array $arguments, UserCumulativeOperations $expectedResult): void
     {
         $userHistoryManager = new UserHistoryManager();
-        $historyProperty = new ReflectionProperty(UserHistoryManager::class, "history");
+        $historyProperty = new ReflectionProperty(UserHistoryManager::class, 'history');
         $historyProperty->setAccessible(true);
         $historyProperty->setValue($userHistoryManager, $history);
         $userCumulativeOperations = $userHistoryManager->get(...$arguments);

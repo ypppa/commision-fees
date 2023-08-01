@@ -53,9 +53,9 @@ class CalculateCommissionFeesCommand extends Command
             $format = $input->getArgument('format');
             $parser = $this->parserFactory->getParser($filePath, $format);
             foreach ($parser->parse() as $operation) {
-                $calculatedOperation = $this->calculator->calculate($operation);
+                $commissionFee = $this->calculator->calculate($operation);
 
-                $this->outputWriter->write($calculatedOperation);
+                $this->outputWriter->write($commissionFee);
             }
 
             return Command::SUCCESS;

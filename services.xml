@@ -6,6 +6,7 @@
 
     <parameters>
         <parameter key="config.file_path">config.yaml</parameter>
+        <parameter key="commission_fee_rules.file_path">commission_fee_rules.json</parameter>
         <parameter key="exchange_rates.url">https://developers.paysera.com/tasks/api/currency-exchange-rates</parameter>
     </parameters>
 
@@ -33,16 +34,11 @@
             <argument type="service" id="ypppa.commission_fees.url_exchange_rate_provider"/>
             <argument type="service" id="ypppa.commission_fees.yaml_configuration_provider"/>
         </service>
-        <service id="ypppa.commission_fees.commission_fee_strategy_factory"
-                 class="Ypppa\CommissionFees\Service\Calculator\Strategy\CommissionFeeStrategyFactory">
-            <argument type="service" id="ypppa.commission_fees.yaml_configuration_provider"/>
-            <argument type="service" id="ypppa.commission_fees.currency_converter"/>
-        </service>
         <service id="ypppa.commission_fees.commission_fee_calculator"
                  class="Ypppa\CommissionFees\Service\Calculator\CommissionFeeCalculator">
             <argument type="service" id="ypppa.commission_fees.yaml_configuration_provider"/>
             <argument type="service" id="ypppa.commission_fees.currency_converter"/>
-            <argument type="service" id="ypppa.commission_fees.commission_fee_strategy_factory"/>
+            <argument type="service" id="ypppa.commission_fees.json_commission_rules_provider"/>
             <argument type="service" id="ypppa.commission_fees.user_history_manager"/>
         </service>
         <service id="ypppa.commission_fees.console_commission_fees_writer"
@@ -81,8 +77,19 @@
             <factory class="Ypppa\CommissionFees\Normalizer\DenormalizerFactory"
                      method="createObjectExchangeRatesDenormalizer"/>
         </service>
+        <service id="ypppa.commission_fees.object_commission_rule_denormalizer"
+                 class="Paysera\Component\Normalization\CoreDenormalizer">
+            <factory class="Ypppa\CommissionFees\Normalizer\DenormalizerFactory"
+                     method="createObjectCommissionRuleDenormalizer"/>
+        </service>
         <service id="ypppa.commission_fees.user_history_manager"
                  class="Ypppa\CommissionFees\Service\Manager\UserHistoryManager">
         </service>
+        <service id="ypppa.commission_fees.json_commission_rules_provider"
+                 class="Ypppa\CommissionFees\Service\InputDataProvider\JsonCommissionRulesProvider">
+            <argument type="service" id="ypppa.commission_fees.object_commission_rule_denormalizer"/>
+            <argument>%commission_fee_rules.file_path%</argument>
+        </service>
+
     </services>
 </container>

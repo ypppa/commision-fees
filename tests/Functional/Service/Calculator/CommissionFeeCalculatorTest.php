@@ -12,11 +12,12 @@ use Ypppa\CommissionFees\Model\Config\Config;
 use Ypppa\CommissionFees\Model\ExchangeRate\ExchangeRate;
 use Ypppa\CommissionFees\Model\ExchangeRate\ExchangeRates;
 use Ypppa\CommissionFees\Model\Operation\Operation;
+use Ypppa\CommissionFees\Normalizer\DenormalizerFactory;
 use Ypppa\CommissionFees\Service\Calculator\CommissionFeeCalculator;
-use Ypppa\CommissionFees\Service\Calculator\Strategy\CommissionFeeStrategyFactory;
 use Ypppa\CommissionFees\Service\CurrencyConverter\CurrencyConverter;
 use Ypppa\CommissionFees\Service\ExchangeRateProvider\MockExchangeRateProvider;
 use Ypppa\CommissionFees\Service\InputDataProvider\ConfigurationProviderInterface;
+use Ypppa\CommissionFees\Service\InputDataProvider\JsonCommissionRulesProvider;
 use Ypppa\CommissionFees\Service\Manager\UserHistoryManager;
 
 /**
@@ -30,11 +31,6 @@ class CommissionFeeCalculatorTest extends TestCase
     {
         $config = (new Config())
             ->setBaseCurrency('EUR')
-            ->setDepositCommission('0.0003')
-            ->setPrivateFreeWithdrawAmount(new Money('1000', 'EUR'))
-            ->setPrivateFreeWithdrawCount(4)
-            ->setPrivateWithdrawCommission('0.003')
-            ->setBusinessWithdrawCommission('0.005')
         ;
         $configurationProvider = $this->createMock(ConfigurationProviderInterface::class);
         $configurationProvider->expects($this->any())->method('getConfig')->willReturn($config);
@@ -48,10 +44,14 @@ class CommissionFeeCalculatorTest extends TestCase
             new MockExchangeRateProvider($exchangeRates),
             $configurationProvider
         );
+        $commissionRulesProvider = new JsonCommissionRulesProvider(
+            DenormalizerFactory::createObjectCommissionRuleDenormalizer(),
+            'commission_fee_rules.json'
+        );
         $this->calculator = new CommissionFeeCalculator(
             $configurationProvider,
             $currencyConverter,
-            new CommissionFeeStrategyFactory($configurationProvider, $currencyConverter),
+            $commissionRulesProvider,
             new UserHistoryManager()
         );
     }
@@ -69,8 +69,7 @@ class CommissionFeeCalculatorTest extends TestCase
     {
         $commissionFees = [];
         foreach ($operations as $operation) {
-            $calculatedOperation = $this->calculator->calculate($operation);
-            $commissionFees[] = $calculatedOperation->getCommissionFee()->formatAmount();
+            $commissionFees[] = $this->calculator->calculate($operation)->formatAmount();
         }
 
         $this->assertEquals($expectedResult, $commissionFees);
@@ -82,10 +81,10 @@ class CommissionFeeCalculatorTest extends TestCase
     public function testCommissionFeeCurrency(): void
     {
         foreach ($this->getExampleOperations() as $operation) {
-            $calculatedOperation = $this->calculator->calculate($operation);
+            $commissionFee = $this->calculator->calculate($operation);
             $this->assertEquals(
-                $calculatedOperation->getOperationAmount()->getCurrency(),
-                $calculatedOperation->getCommissionFee()->getCurrency()
+                $operation->getOperationAmount()->getCurrency(),
+                $commissionFee->getCurrency()
             );
         }
     }

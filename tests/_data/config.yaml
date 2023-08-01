@@ -1,8 +1,1 @@
 base_currency: "EUR"
-deposit_commission: "0.0003" # 0.03% of deposit amount
-private_free_withdraw_amount:
-    amount: "1000"
-    currency: "EUR"
-private_free_withdraw_count: 3 # per 1 week from Monday to Sunday
-private_withdraw_commission: "0.003" # 0.3% of withdrawn amount
-business_withdraw_commission: "0.005" # 0.5% from withdrawn amount

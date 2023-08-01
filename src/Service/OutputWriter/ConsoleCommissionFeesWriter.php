@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Ypppa\CommissionFees\Service\OutputWriter;
 
+use Evp\Component\Money\Money;
 use Symfony\Component\Console\Output\OutputInterface;
-use Ypppa\CommissionFees\Model\Operation\Operation;
 
 class ConsoleCommissionFeesWriter implements CommissionFeesWriterInterface
 {
@@ -16,8 +16,8 @@ class ConsoleCommissionFeesWriter implements CommissionFeesWriterInterface
         $this->output = $output;
     }
 
-    public function write(Operation $operation): void
+    public function write(Money $commissionFee): void
     {
-        $this->output->writeln($operation->getCommissionFee()->formatAmount());
+        $this->output->writeln($commissionFee->formatAmount());
     }
 }

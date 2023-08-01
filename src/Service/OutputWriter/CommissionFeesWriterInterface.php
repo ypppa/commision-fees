@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Ypppa\CommissionFees\Service\OutputWriter;
 
-use Ypppa\CommissionFees\Model\Operation\Operation;
+use Evp\Component\Money\Money;
 
 interface CommissionFeesWriterInterface
 {
-    public function write(Operation $operation): void;
+    public function write(Money $commissionFee): void;
 }

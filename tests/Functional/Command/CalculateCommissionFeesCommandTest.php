@@ -7,9 +7,7 @@ namespace Ypppa\CommissionFees\Tests\Functional\Command;
 use DateTimeImmutable;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
-use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\BufferedOutput;
-use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Tester\CommandTester;
 use Ypppa\CommissionFees\Command\CalculateCommissionFeesCommand;
 use Ypppa\CommissionFees\Exception\CommissionFeeCalculationFailedException;
@@ -19,9 +17,9 @@ use Ypppa\CommissionFees\Model\ExchangeRate\ExchangeRate;
 use Ypppa\CommissionFees\Model\ExchangeRate\ExchangeRates;
 use Ypppa\CommissionFees\Normalizer\DenormalizerFactory;
 use Ypppa\CommissionFees\Service\Calculator\CommissionFeeCalculator;
-use Ypppa\CommissionFees\Service\Calculator\Strategy\CommissionFeeStrategyFactory;
 use Ypppa\CommissionFees\Service\CurrencyConverter\CurrencyConverter;
 use Ypppa\CommissionFees\Service\ExchangeRateProvider\MockExchangeRateProvider;
+use Ypppa\CommissionFees\Service\InputDataProvider\JsonCommissionRulesProvider;
 use Ypppa\CommissionFees\Service\InputDataProvider\YamlConfigurationProvider;
 use Ypppa\CommissionFees\Service\Manager\UserHistoryManager;
 use Ypppa\CommissionFees\Service\OutputWriter\ConsoleCommissionFeesWriter;
@@ -39,7 +37,7 @@ class CalculateCommissionFeesCommandTest extends TestCase
 
     public function setUp(): void
     {
-        $logger = new ConsoleLogger(new ConsoleOutput());
+        $logger = new NullLogger();
         $configurationProvider = new YamlConfigurationProvider(
             MetadataValidatorFactory::createValidator(),
             DenormalizerFactory::createMixedConfigDenormalizer(),
@@ -56,10 +54,14 @@ class CalculateCommissionFeesCommandTest extends TestCase
             new MockExchangeRateProvider($exchangeRates),
             $configurationProvider
         );
+        $commissionRulesProvider = new JsonCommissionRulesProvider(
+            DenormalizerFactory::createObjectCommissionRuleDenormalizer(),
+            'commission_fee_rules.json'
+        );
         $this->calculator = new CommissionFeeCalculator(
             $configurationProvider,
             $currencyConverter,
-            new CommissionFeeStrategyFactory($configurationProvider, $currencyConverter),
+            $commissionRulesProvider,
             new UserHistoryManager()
         );
         $operationsParserFactory = new OperationsParserFactory(
@@ -76,52 +78,86 @@ class CalculateCommissionFeesCommandTest extends TestCase
         );
     }
 
-    public function testCommandHappyPath(): void
+    /**
+     * @dataProvider commandDataProvider
+     *
+     * @param string $filePath
+     * @param string $expectedResult
+     *
+     * @return void
+     */
+    public function testCommand(string $filePath, string $expectedResult): void
     {
         $commandTester = new CommandTester($this->commandWithSuccess);
         $commandTester->execute([
-            'file_path' => 'tests/_data/operations.csv',
+            'file_path' => $filePath,
             'format' => OperationsParserFactory::CSV_FILE_FORMAT,
         ]);
         $commandTester->assertCommandIsSuccessful();
-        $this->assertEquals(
-            implode(chr(10), [
-                '0.60',
-                '3.00',
-                '0.00',
-                '0.06',
-                '1.50',
-                '0',
-                '0.69',
-                '0.30',
-                '0.30',
-                '3.00',
-                '0.00',
-                '0.00',
-                '8608',
-                '',
-            ]),
-            $this->output->fetch()
-        );
+        $this->assertEquals($expectedResult, $this->output->fetch());
     }
 
-    public function testCommandOperationsOrder(): void
+    public function commandDataProvider(): array
     {
-        $commandTester = new CommandTester($this->commandWithSuccess);
-        $commandTester->execute([
-            'file_path' => 'tests/_data/operations_order.csv',
-            'format' => OperationsParserFactory::CSV_FILE_FORMAT,
-        ]);
-        $commandTester->assertCommandIsSuccessful();
-        $this->assertEquals(
-            implode(chr(10), [
-                '0.60',
-                '0.60',
-                '3.60',
-                '',
-            ]),
-            $this->output->fetch()
-        );
+        return [
+            'example data happy path' => [
+                'filePath' => 'tests/_data/operations.csv',
+                'expectedResult' => implode(chr(10), [
+                    '0.60',
+                    '3.00',
+                    '0.00',
+                    '0.06',
+                    '1.50',
+                    '0',
+                    '0.69',
+                    '0.30',
+                    '0.30',
+                    '3.00',
+                    '0.00',
+                    '0.00',
+                    '8608',
+                    '',
+                ]),
+            ],
+            'specific rules' => [
+                'filePath' => 'tests/_data/operations_specific_rules.csv',
+                'expectedResult' => implode(chr(10), [
+                    '0.00',
+                    '0.00',
+                    '3.00',
+                    '0.00',
+                    '3.00',
+                    '13.00',
+                    '0.50',
+                    '0.50',
+                    '0.00',
+                    '0.00',
+                    '0.50',
+                    '10.00',
+                    '0.00',
+                    '0.00',
+                    '0.00',
+                    '0.00',
+                    '0.00',
+                    '0.00',
+                    '0.00',
+                    '0.00',
+                    '0.00',
+                    '0.00',
+                    '2.50',
+                    '',
+                ]),
+            ],
+            'operations order' => [
+                'filePath' => 'tests/_data/operations_order.csv',
+                'expectedResult' => implode(chr(10), [
+                    '0.60',
+                    '0.60',
+                    '3.60',
+                    '',
+                ]),
+            ],
+        ];
     }
 
     /**
