@@ -4,24 +4,24 @@ declare(strict_types=1);
 
 namespace Ypppa\CommissionFees\Service\InputDataProvider;
 
-use Paysera\Component\Normalization\CoreDenormalizer;
 use Throwable;
 use Ypppa\CommissionFees\Exception\CommissionRulesLoadException;
 use Ypppa\CommissionFees\Model\Operation\Operation;
 use Ypppa\CommissionFees\Model\Rule\CommissionFeeRule;
+use Ypppa\CommissionFees\Service\Parser\ParserInterface;
 
-class JsonCommissionRulesProvider implements CommissionRulesProviderInterface
+class CommissionRulesProvider implements CommissionRulesProviderInterface
 {
-    private CoreDenormalizer $denormalizer;
+    private ParserInterface $parser;
     private string $filePath;
     /**
      * @var CommissionFeeRule[]
      */
     private ?array $rules;
 
-    public function __construct(CoreDenormalizer $denormalizer, string $filePath)
+    public function __construct(ParserInterface $parser, string $filePath)
     {
-        $this->denormalizer = $denormalizer;
+        $this->parser = $parser;
         $this->filePath = $filePath;
         $this->rules = null;
     }
@@ -50,10 +50,7 @@ class JsonCommissionRulesProvider implements CommissionRulesProviderInterface
     private function load(): void
     {
         try {
-            $data = json_decode(file_get_contents($this->filePath));
-            foreach ($data as $item) {
-                $this->rules[] = $this->denormalizer->denormalize($item, CommissionFeeRule::class);
-            }
+            $this->rules = iterator_to_array($this->parser->parse($this->filePath));
         } catch (Throwable $exception) {
             throw new CommissionRulesLoadException($exception);
         }

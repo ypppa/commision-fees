@@ -6,7 +6,7 @@ namespace Ypppa\CommissionFees\Service\Parser;
 
 use Generator;
 
-interface OperationsParserInterface
+interface ParserInterface
 {
-    public function parse(): Generator;
+    public function parse(string $filePath): Generator;
 }

@@ -25,7 +25,8 @@
         "symfony/console": "^6.0",
         "symfony/validator": "^5.4",
         "symfony/yaml": "^6.0",
-        "symfony/dependency-injection": "^5.4"
+        "symfony/dependency-injection": "^5.4",
+        "halaxa/json-machine": "^1.1"
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3.21",

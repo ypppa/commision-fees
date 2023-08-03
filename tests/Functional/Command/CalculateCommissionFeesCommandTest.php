@@ -19,11 +19,13 @@ use Ypppa\CommissionFees\Normalizer\DenormalizerFactory;
 use Ypppa\CommissionFees\Service\Calculator\CommissionFeeCalculator;
 use Ypppa\CommissionFees\Service\CurrencyConverter\CurrencyConverter;
 use Ypppa\CommissionFees\Service\ExchangeRateProvider\MockExchangeRateProvider;
-use Ypppa\CommissionFees\Service\InputDataProvider\JsonCommissionRulesProvider;
+use Ypppa\CommissionFees\Service\InputDataProvider\CommissionRulesProvider;
 use Ypppa\CommissionFees\Service\InputDataProvider\YamlConfigurationProvider;
 use Ypppa\CommissionFees\Service\Manager\UserHistoryManager;
 use Ypppa\CommissionFees\Service\OutputWriter\ConsoleCommissionFeesWriter;
+use Ypppa\CommissionFees\Service\Parser\CommissionRulesParser;
 use Ypppa\CommissionFees\Service\Parser\OperationsParserFactory;
+use Ypppa\CommissionFees\Service\Reader\JsonReader;
 use Ypppa\CommissionFees\Validator\MetadataValidatorFactory;
 
 /**
@@ -54,8 +56,8 @@ class CalculateCommissionFeesCommandTest extends TestCase
             new MockExchangeRateProvider($exchangeRates),
             $configurationProvider
         );
-        $commissionRulesProvider = new JsonCommissionRulesProvider(
-            DenormalizerFactory::createObjectCommissionRuleDenormalizer(),
+        $commissionRulesProvider = new CommissionRulesProvider(
+            new CommissionRulesParser(new JsonReader(), DenormalizerFactory::createObjectCommissionRuleDenormalizer()),
             'commission_fee_rules.json'
         );
         $this->calculator = new CommissionFeeCalculator(
@@ -74,7 +76,8 @@ class CalculateCommissionFeesCommandTest extends TestCase
             $logger,
             $operationsParserFactory,
             $this->calculator,
-            new ConsoleCommissionFeesWriter($this->output)
+            new ConsoleCommissionFeesWriter($this->output),
+            MetadataValidatorFactory::createValidator()
         );
     }
 
@@ -178,7 +181,8 @@ class CalculateCommissionFeesCommandTest extends TestCase
                 DenormalizerFactory::createObjectOperationDenormalizer()
             ),
             $this->calculator,
-            new ConsoleCommissionFeesWriter($this->output)
+            new ConsoleCommissionFeesWriter($this->output),
+            MetadataValidatorFactory::createValidator()
         );
 
         $commandTester = new CommandTester($command);

@@ -1,0 +1,18 @@
+[
+    {
+        "operation_date": "2014-12-31",
+        "user_id": "4",
+        "user_type": "private",
+        "operation_type": "withdraw",
+        "amount": "1200.00",
+        "currency": "EUR"
+    },
+    {
+        "operation_date": "2015-01-01",
+        "user_id": "4",
+        "user_type": "private",
+        "operation_type": "withdraw",
+        "amount": "1000.00",
+        "currency": "EUR"
+    }
+]

@@ -16,9 +16,11 @@ use Ypppa\CommissionFees\Normalizer\DenormalizerFactory;
 use Ypppa\CommissionFees\Service\Calculator\CommissionFeeCalculator;
 use Ypppa\CommissionFees\Service\CurrencyConverter\CurrencyConverter;
 use Ypppa\CommissionFees\Service\ExchangeRateProvider\MockExchangeRateProvider;
+use Ypppa\CommissionFees\Service\InputDataProvider\CommissionRulesProvider;
 use Ypppa\CommissionFees\Service\InputDataProvider\ConfigurationProviderInterface;
-use Ypppa\CommissionFees\Service\InputDataProvider\JsonCommissionRulesProvider;
 use Ypppa\CommissionFees\Service\Manager\UserHistoryManager;
+use Ypppa\CommissionFees\Service\Parser\CommissionRulesParser;
+use Ypppa\CommissionFees\Service\Reader\JsonReader;
 
 /**
  * @codeCoverageIgnore
@@ -44,8 +46,8 @@ class CommissionFeeCalculatorTest extends TestCase
             new MockExchangeRateProvider($exchangeRates),
             $configurationProvider
         );
-        $commissionRulesProvider = new JsonCommissionRulesProvider(
-            DenormalizerFactory::createObjectCommissionRuleDenormalizer(),
+        $commissionRulesProvider = new CommissionRulesProvider(
+            new CommissionRulesParser(new JsonReader(), DenormalizerFactory::createObjectCommissionRuleDenormalizer()),
             'commission_fee_rules.json'
         );
         $this->calculator = new CommissionFeeCalculator(

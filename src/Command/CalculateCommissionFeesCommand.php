@@ -9,7 +9,10 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Validator\Exception\ValidationFailedException;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Ypppa\CommissionFees\Exception\CommissionFeeCalculationFailedException;
+use Ypppa\CommissionFees\Exception\ValidationException;
 use Ypppa\CommissionFees\Service\Calculator\CommissionFeeCalculator;
 use Ypppa\CommissionFees\Service\OutputWriter\CommissionFeesWriterInterface;
 use Ypppa\CommissionFees\Service\Parser\OperationsParserFactory;
@@ -22,12 +25,14 @@ class CalculateCommissionFeesCommand extends Command
     private OperationsParserFactory $parserFactory;
     private CommissionFeeCalculator $calculator;
     private CommissionFeesWriterInterface $outputWriter;
+    private ValidatorInterface $validator;
 
     public function __construct(
         LoggerInterface $logger,
         OperationsParserFactory $operationsParser,
         CommissionFeeCalculator $calculator,
-        CommissionFeesWriterInterface $outputWriter
+        CommissionFeesWriterInterface $outputWriter,
+        ValidatorInterface $validator
     ) {
 
         parent::__construct();
@@ -35,6 +40,7 @@ class CalculateCommissionFeesCommand extends Command
         $this->parserFactory = $operationsParser;
         $this->calculator = $calculator;
         $this->outputWriter = $outputWriter;
+        $this->validator = $validator;
     }
 
     protected function configure(): void
@@ -51,8 +57,14 @@ class CalculateCommissionFeesCommand extends Command
         try {
             $filePath = $input->getArgument('file_path');
             $format = $input->getArgument('format');
-            $parser = $this->parserFactory->getParser($filePath, $format);
-            foreach ($parser->parse() as $operation) {
+            $parser = $this->parserFactory->getParser($format);
+            foreach ($parser->parse($filePath) as $operation) {
+
+                $violations = $this->validator->validate($operation);
+                if ($violations->count() > 0) {
+                    throw new ValidationException(new ValidationFailedException($operation, $violations));
+                }
+
                 $commissionFee = $this->calculator->calculate($operation);
 
                 $this->outputWriter->write($commissionFee);

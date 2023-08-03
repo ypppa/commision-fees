@@ -6,21 +6,25 @@ namespace Ypppa\CommissionFees\Tests\Unit\Service\InputDataProvider;
 
 use DateTimeImmutable;
 use Evp\Component\Money\Money;
-use Paysera\Component\Normalization\CoreDenormalizer;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use ReflectionProperty;
 use Ypppa\CommissionFees\Model\Operation\Operation;
 use Ypppa\CommissionFees\Model\Rule\CommissionFeeRule;
-use Ypppa\CommissionFees\Service\InputDataProvider\JsonCommissionRulesProvider;
+use Ypppa\CommissionFees\Service\InputDataProvider\CommissionRulesProvider;
+use Ypppa\CommissionFees\Service\Parser\ParserInterface;
 
-class JsonCommissionRulesProviderTest extends TestCase
+/**
+ * @codeCoverageIgnore
+ */
+class CommissionRulesProviderTest extends TestCase
 {
-    private JsonCommissionRulesProvider $commissionRulesProvider;
+    private CommissionRulesProvider $commissionRulesProvider;
+    private MockObject|ParserInterface $parser;
 
     public function setUp(): void
     {
-        $denormalizer = $this->createMock(CoreDenormalizer::class);
-        $this->commissionRulesProvider = new JsonCommissionRulesProvider($denormalizer, '');
+        $this->parser = $this->createMock(ParserInterface::class);
+        $this->commissionRulesProvider = new CommissionRulesProvider($this->parser, '');
     }
 
     /**
@@ -34,9 +38,11 @@ class JsonCommissionRulesProviderTest extends TestCase
      */
     public function testGetRule(array $rules, Operation $operation, CommissionFeeRule $expectedResult): void
     {
-        $rulesProperty = new ReflectionProperty(JsonCommissionRulesProvider::class, 'rules');
-        $rulesProperty->setAccessible(true);
-        $rulesProperty->setValue($this->commissionRulesProvider, $rules);
+        $this->parser
+            ->method('parse')
+            ->willReturnCallBack(fn() => yield from $rules)
+        ;
+
         $this->assertEquals($expectedResult, $this->commissionRulesProvider->getRule($operation));
     }
 

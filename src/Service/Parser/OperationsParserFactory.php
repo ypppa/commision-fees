@@ -6,6 +6,8 @@ namespace Ypppa\CommissionFees\Service\Parser;
 
 use Paysera\Component\Normalization\CoreDenormalizer;
 use Ypppa\CommissionFees\Exception\InvalidFileFormatException;
+use Ypppa\CommissionFees\Service\Reader\CsvReader;
+use Ypppa\CommissionFees\Service\Reader\JsonReader;
 
 class OperationsParserFactory
 {
@@ -22,19 +24,18 @@ class OperationsParserFactory
     }
 
     /**
-     * @param string $filePath
      * @param string $format
      *
-     * @return OperationsParserInterface
+     * @return OperationsParser
      * @throws InvalidFileFormatException
      */
-    public function getParser(string $filePath, string $format): OperationsParserInterface
+    public function getParser(string $format): OperationsParser
     {
         switch ($format) {
             case self::CSV_FILE_FORMAT:
-                return new CsvOperationsParser($this->mixedDenormalizer, $filePath);
+                return new OperationsParser(new CsvReader(), $this->mixedDenormalizer);
             case self::JSON_FILE_FORMAT:
-                return new JsonOperationsParser($this->objectDenormalizer, $filePath);
+                return new OperationsParser(new JsonReader(), $this->objectDenormalizer);
             default:
                 throw new InvalidFileFormatException(null);
         }

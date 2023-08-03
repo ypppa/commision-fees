@@ -19,6 +19,9 @@ use Ypppa\CommissionFees\Service\InputDataProvider\CommissionRulesProviderInterf
 use Ypppa\CommissionFees\Service\InputDataProvider\ConfigurationProviderInterface;
 use Ypppa\CommissionFees\Service\Manager\UserHistoryManager;
 
+/**
+ * @codeCoverageIgnore
+ */
 class CommissionFeeCalculatorTest extends TestCase
 {
     private MockObject|CurrencyConverter $currencyConverter;
