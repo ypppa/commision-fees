@@ -15,6 +15,7 @@ $application = new Application('commission-fees', '1.0.0');
 $container = new ContainerBuilder();
 $loader = new XmlFileLoader($container, new FileLocator(__DIR__));
 $loader->load('services.xml');
+$container->compile();
 
 $command = $container->get('ypppa.commission_fees.command.calculate_commission_fees');
 

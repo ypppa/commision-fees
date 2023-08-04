@@ -15,21 +15,21 @@ use Ypppa\CommissionFees\Exception\CommissionFeeCalculationFailedException;
 use Ypppa\CommissionFees\Exception\ValidationException;
 use Ypppa\CommissionFees\Service\Calculator\CommissionFeeCalculator;
 use Ypppa\CommissionFees\Service\OutputWriter\CommissionFeesWriterInterface;
-use Ypppa\CommissionFees\Service\Parser\OperationsParserFactory;
+use Ypppa\CommissionFees\Service\Parser\ParserResolver;
 
 class CalculateCommissionFeesCommand extends Command
 {
     protected static $defaultDescription = 'Calculate transactions\' commission fees.';
     protected static $defaultName = 'app:calc-commissions';
     private LoggerInterface $logger;
-    private OperationsParserFactory $parserFactory;
+    private ParserResolver $parserResolver;
     private CommissionFeeCalculator $calculator;
     private CommissionFeesWriterInterface $outputWriter;
     private ValidatorInterface $validator;
 
     public function __construct(
         LoggerInterface $logger,
-        OperationsParserFactory $operationsParser,
+        ParserResolver $parserResolver,
         CommissionFeeCalculator $calculator,
         CommissionFeesWriterInterface $outputWriter,
         ValidatorInterface $validator
@@ -37,7 +37,7 @@ class CalculateCommissionFeesCommand extends Command
 
         parent::__construct();
         $this->logger = $logger;
-        $this->parserFactory = $operationsParser;
+        $this->parserResolver = $parserResolver;
         $this->calculator = $calculator;
         $this->outputWriter = $outputWriter;
         $this->validator = $validator;
@@ -57,7 +57,10 @@ class CalculateCommissionFeesCommand extends Command
         try {
             $filePath = $input->getArgument('file_path');
             $format = $input->getArgument('format');
-            $parser = $this->parserFactory->getParser($format);
+            $parser = $this->parserResolver->getParser('operations.' . $format);
+            if ($parser === null) {
+                throw new CommissionFeeCalculationFailedException('', null, null);
+            }
             foreach ($parser->parse($filePath) as $operation) {
 
                 $violations = $this->validator->validate($operation);

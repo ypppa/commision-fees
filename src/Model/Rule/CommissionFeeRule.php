@@ -9,9 +9,9 @@ use Evp\Component\Money\Money;
 class CommissionFeeRule
 {
     /**
-     * @var string[]|null
+     * @var string[]
      */
-    private ?array $userId;
+    private array $userId;
     private ?string $userType;
     private ?string $operationType;
     private ?int $freeOperationsCountLimit;
@@ -22,7 +22,7 @@ class CommissionFeeRule
 
     public function __construct()
     {
-        $this->userId = null;
+        $this->userId = [];
         $this->userType = null;
         $this->operationType = null;
         $this->freeOperationsCountLimit = null;
@@ -33,19 +33,19 @@ class CommissionFeeRule
     }
 
     /**
-     * @return string[]|null
+     * @return string[]
      */
-    public function getUserId(): ?array
+    public function getUserId(): array
     {
         return $this->userId;
     }
 
     /**
-     * @param string[]|null $userId
+     * @param string[] $userId
      *
      * @return $this
      */
-    public function setUserId(?array $userId): self
+    public function setUserId(array $userId): self
     {
         $this->userId = $userId;
 

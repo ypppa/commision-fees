@@ -1,0 +1,25 @@
+[
+    {
+        "user_id": null,
+        "user_type": null,
+        "operation_type": "deposit",
+        "free_operations_count_limit": null,
+        "free_operations_amount_limit": null,
+        "commission": "0.0003",
+        "commission_fee_min": null,
+        "commission_fee_max": null
+    },
+    {
+        "user_id": null,
+        "user_type": "private",
+        "operation_type": "withdraw",
+        "free_operations_count_limit": 3,
+        "free_operations_amount_limit": {
+            "amount": "1000",
+            "currency": "EUR"
+        },
+        "commission": "0.003",
+        "commission_fee_min": null,
+        "commission_fee_max": null
+    }
+]

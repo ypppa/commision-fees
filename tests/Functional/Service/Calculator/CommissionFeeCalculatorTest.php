@@ -6,56 +6,36 @@ namespace Ypppa\CommissionFees\Tests\Functional\Service\Calculator;
 
 use DateTimeImmutable;
 use Evp\Component\Money\Money;
-use PHPUnit\Framework\TestCase;
 use Ypppa\CommissionFees\Exception\CommissionFeeCalculationFailedException;
-use Ypppa\CommissionFees\Model\Config\Config;
 use Ypppa\CommissionFees\Model\ExchangeRate\ExchangeRate;
 use Ypppa\CommissionFees\Model\ExchangeRate\ExchangeRates;
 use Ypppa\CommissionFees\Model\Operation\Operation;
-use Ypppa\CommissionFees\Normalizer\DenormalizerFactory;
 use Ypppa\CommissionFees\Service\Calculator\CommissionFeeCalculator;
-use Ypppa\CommissionFees\Service\CurrencyConverter\CurrencyConverter;
 use Ypppa\CommissionFees\Service\ExchangeRateProvider\MockExchangeRateProvider;
-use Ypppa\CommissionFees\Service\InputDataProvider\CommissionRulesProvider;
-use Ypppa\CommissionFees\Service\InputDataProvider\ConfigurationProviderInterface;
-use Ypppa\CommissionFees\Service\Manager\UserHistoryManager;
-use Ypppa\CommissionFees\Service\Parser\CommissionRulesParser;
-use Ypppa\CommissionFees\Service\Reader\JsonReader;
+use Ypppa\CommissionFees\Tests\Functional\AbstractTestCase;
 
 /**
  * @codeCoverageIgnore
  */
-class CommissionFeeCalculatorTest extends TestCase
+class CommissionFeeCalculatorTest extends AbstractTestCase
 {
     private CommissionFeeCalculator $calculator;
 
     public function setUp(): void
     {
-        $config = (new Config())
-            ->setBaseCurrency('EUR')
-        ;
-        $configurationProvider = $this->createMock(ConfigurationProviderInterface::class);
-        $configurationProvider->expects($this->any())->method('getConfig')->willReturn($config);
+        parent::setUp();
         $exchangeRates = (new ExchangeRates())
             ->setBase('EUR')
             ->setDate(new DateTimeImmutable('today'))
             ->addRate(new ExchangeRate('JPY', '129.53'))
             ->addRate(new ExchangeRate('USD', '1.1497'))
         ;
-        $currencyConverter = new CurrencyConverter(
-            new MockExchangeRateProvider($exchangeRates),
-            $configurationProvider
+        $this->container->set(
+            'ypppa.commission_fees.url_exchange_rate_provider',
+            new MockExchangeRateProvider($exchangeRates)
         );
-        $commissionRulesProvider = new CommissionRulesProvider(
-            new CommissionRulesParser(new JsonReader(), DenormalizerFactory::createObjectCommissionRuleDenormalizer()),
-            'commission_fee_rules.json'
-        );
-        $this->calculator = new CommissionFeeCalculator(
-            $configurationProvider,
-            $currencyConverter,
-            $commissionRulesProvider,
-            new UserHistoryManager()
-        );
+        $this->container->compile();
+        $this->calculator = $this->container->get('ypppa.commission_fees.commission_fee_calculator');
     }
 
     /**

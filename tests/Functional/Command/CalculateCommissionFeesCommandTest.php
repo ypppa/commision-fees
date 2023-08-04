@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Ypppa\CommissionFees\Tests\Functional\Command;
 
 use DateTimeImmutable;
-use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\Console\Tester\CommandTester;
@@ -15,36 +14,23 @@ use Ypppa\CommissionFees\Exception\InvalidFileFormatException;
 use Ypppa\CommissionFees\Exception\UnsupportedCurrencyException;
 use Ypppa\CommissionFees\Model\ExchangeRate\ExchangeRate;
 use Ypppa\CommissionFees\Model\ExchangeRate\ExchangeRates;
-use Ypppa\CommissionFees\Normalizer\DenormalizerFactory;
-use Ypppa\CommissionFees\Service\Calculator\CommissionFeeCalculator;
-use Ypppa\CommissionFees\Service\CurrencyConverter\CurrencyConverter;
 use Ypppa\CommissionFees\Service\ExchangeRateProvider\MockExchangeRateProvider;
-use Ypppa\CommissionFees\Service\InputDataProvider\CommissionRulesProvider;
-use Ypppa\CommissionFees\Service\InputDataProvider\YamlConfigurationProvider;
-use Ypppa\CommissionFees\Service\Manager\UserHistoryManager;
 use Ypppa\CommissionFees\Service\OutputWriter\ConsoleCommissionFeesWriter;
-use Ypppa\CommissionFees\Service\Parser\CommissionRulesParser;
-use Ypppa\CommissionFees\Service\Parser\OperationsParserFactory;
-use Ypppa\CommissionFees\Service\Reader\JsonReader;
-use Ypppa\CommissionFees\Validator\MetadataValidatorFactory;
+use Ypppa\CommissionFees\Tests\Functional\AbstractTestCase;
 
 /**
  * @codeCoverageIgnore
  */
-class CalculateCommissionFeesCommandTest extends TestCase
+class CalculateCommissionFeesCommandTest extends AbstractTestCase
 {
-    private CommissionFeeCalculator $calculator;
-    private CalculateCommissionFeesCommand $commandWithSuccess;
+    private CalculateCommissionFeesCommand $command;
     private BufferedOutput $output;
 
     public function setUp(): void
     {
+        parent::setUp();
+
         $logger = new NullLogger();
-        $configurationProvider = new YamlConfigurationProvider(
-            MetadataValidatorFactory::createValidator(),
-            DenormalizerFactory::createMixedConfigDenormalizer(),
-            'tests/_data/config.yaml'
-        );
         $exchangeRates = (new ExchangeRates())
             ->setBase('EUR')
             ->setDate(new DateTimeImmutable('today'))
@@ -52,33 +38,17 @@ class CalculateCommissionFeesCommandTest extends TestCase
             ->addRate(new ExchangeRate('JPY', '130.869977'))
             ->addRate(new ExchangeRate('USD', '1.129031'))
         ;
-        $currencyConverter = new CurrencyConverter(
-            new MockExchangeRateProvider($exchangeRates),
-            $configurationProvider
-        );
-        $commissionRulesProvider = new CommissionRulesProvider(
-            new CommissionRulesParser(new JsonReader(), DenormalizerFactory::createObjectCommissionRuleDenormalizer()),
-            'commission_fee_rules.json'
-        );
-        $this->calculator = new CommissionFeeCalculator(
-            $configurationProvider,
-            $currencyConverter,
-            $commissionRulesProvider,
-            new UserHistoryManager()
-        );
-        $operationsParserFactory = new OperationsParserFactory(
-            DenormalizerFactory::createMixedOperationDenormalizer(),
-            DenormalizerFactory::createObjectOperationDenormalizer()
-        );
-
+        $exchangeRateProvider = new MockExchangeRateProvider($exchangeRates);
         $this->output = new BufferedOutput();
-        $this->commandWithSuccess = new CalculateCommissionFeesCommand(
-            $logger,
-            $operationsParserFactory,
-            $this->calculator,
-            new ConsoleCommissionFeesWriter($this->output),
-            MetadataValidatorFactory::createValidator()
-        );
+        $writer = new ConsoleCommissionFeesWriter($this->output);
+
+        $this->container->set('ypppa.commission_fees.logger', $logger);
+        $this->container->set('ypppa.commission_fees.url_exchange_rate_provider', $exchangeRateProvider);
+        $this->container->set('ypppa.commission_fees.console_commission_fees_writer', $writer);
+
+        $this->container->compile();
+
+        $this->command = $this->container->get('ypppa.commission_fees.command.calculate_commission_fees');
     }
 
     /**
@@ -91,10 +61,10 @@ class CalculateCommissionFeesCommandTest extends TestCase
      */
     public function testCommand(string $filePath, string $expectedResult): void
     {
-        $commandTester = new CommandTester($this->commandWithSuccess);
+        $commandTester = new CommandTester($this->command);
         $commandTester->execute([
             'file_path' => $filePath,
-            'format' => OperationsParserFactory::CSV_FILE_FORMAT,
+            'format' => 'csv',
         ]);
         $commandTester->assertCommandIsSuccessful();
         $this->assertEquals($expectedResult, $this->output->fetch());
@@ -174,21 +144,10 @@ class CalculateCommissionFeesCommandTest extends TestCase
      */
     public function testExceptions(string $filePath, int $expectedResultCode, string $expectedMessage): void
     {
-        $command = new CalculateCommissionFeesCommand(
-            new NullLogger(),
-            new OperationsParserFactory(
-                DenormalizerFactory::createMixedOperationDenormalizer(),
-                DenormalizerFactory::createObjectOperationDenormalizer()
-            ),
-            $this->calculator,
-            new ConsoleCommissionFeesWriter($this->output),
-            MetadataValidatorFactory::createValidator()
-        );
-
-        $commandTester = new CommandTester($command);
+        $commandTester = new CommandTester($this->command);
         $commandTester->execute([
             'file_path' => $filePath,
-            'format' => OperationsParserFactory::CSV_FILE_FORMAT,
+            'format' => 'csv',
         ]);
         $this->assertEquals($expectedResultCode, $commandTester->getStatusCode());
         $this->assertStringContainsString($expectedMessage, $commandTester->getDisplay());

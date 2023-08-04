@@ -12,14 +12,14 @@
 
     <services>
         <service id="ypppa.commission_fees.console_output" class="Symfony\Component\Console\Output\ConsoleOutput"/>
-        <service id="ypppa.commission_fees.console_logger" class="Symfony\Component\Console\Logger\ConsoleLogger">
+        <service id="ypppa.commission_fees.logger" class="Symfony\Component\Console\Logger\ConsoleLogger">
             <argument type="service" id="ypppa.commission_fees.console_output"/>
         </service>
         <service id="ypppa.commission_fees.validator" class="Symfony\Component\Validator\Validator\ValidatorInterface">
             <factory class="Ypppa\CommissionFees\Validator\MetadataValidatorFactory" method="createValidator"/>
         </service>
         <service id="ypppa.commission_fees.yaml_configuration_provider"
-                 class="Ypppa\CommissionFees\Service\InputDataProvider\YamlConfigurationProvider">
+                 class="Ypppa\CommissionFees\Service\InputDataProvider\YamlConfigurationProvider" public="true">
             <argument type="service" id="ypppa.commission_fees.validator"/>
             <argument type="service" id="ypppa.commission_fees.mixed_config_denormalizer"/>
             <argument>%config.file_path%</argument>
@@ -35,7 +35,7 @@
             <argument type="service" id="ypppa.commission_fees.yaml_configuration_provider"/>
         </service>
         <service id="ypppa.commission_fees.commission_fee_calculator"
-                 class="Ypppa\CommissionFees\Service\Calculator\CommissionFeeCalculator">
+                 class="Ypppa\CommissionFees\Service\Calculator\CommissionFeeCalculator" public="true">
             <argument type="service" id="ypppa.commission_fees.yaml_configuration_provider"/>
             <argument type="service" id="ypppa.commission_fees.currency_converter"/>
             <argument type="service" id="ypppa.commission_fees.commission_rules_provider"/>
@@ -46,17 +46,12 @@
             <argument type="service" id="ypppa.commission_fees.console_output"/>
         </service>
         <service id="ypppa.commission_fees.command.calculate_commission_fees"
-                 class="Ypppa\CommissionFees\Command\CalculateCommissionFeesCommand">
-            <argument type="service" id="ypppa.commission_fees.console_logger"/>
-            <argument type="service" id="ypppa.commission_fees.operations_parser_factory"/>
+                 class="Ypppa\CommissionFees\Command\CalculateCommissionFeesCommand" public="true">
+            <argument type="service" id="ypppa.commission_fees.logger"/>
+            <argument type="service" id="ypppa.commission_fees.parser_resolver"/>
             <argument type="service" id="ypppa.commission_fees.commission_fee_calculator"/>
             <argument type="service" id="ypppa.commission_fees.console_commission_fees_writer"/>
             <argument type="service" id="ypppa.commission_fees.validator"/>
-        </service>
-        <service id="ypppa.commission_fees.operations_parser_factory"
-                 class="Ypppa\CommissionFees\Service\Parser\OperationsParserFactory">
-            <argument type="service" id="ypppa.commission_fees.mixed_operation_denormalizer"/>
-            <argument type="service" id="ypppa.commission_fees.object_operation_denormalizer"/>
         </service>
         <service id="ypppa.commission_fees.mixed_config_denormalizer"
                  class="Paysera\Component\Normalization\CoreDenormalizer">
@@ -64,12 +59,12 @@
                      method="createMixedConfigDenormalizer"/>
         </service>
         <service id="ypppa.commission_fees.mixed_operation_denormalizer"
-                 class="Paysera\Component\Normalization\CoreDenormalizer">
+                 class="Paysera\Component\Normalization\CoreDenormalizer" public="true">
             <factory class="Ypppa\CommissionFees\Normalizer\DenormalizerFactory"
                      method="createMixedOperationDenormalizer"/>
         </service>
         <service id="ypppa.commission_fees.object_operation_denormalizer"
-                 class="Paysera\Component\Normalization\CoreDenormalizer">
+                 class="Paysera\Component\Normalization\CoreDenormalizer" public="true">
             <factory class="Ypppa\CommissionFees\Normalizer\DenormalizerFactory"
                      method="createObjectOperationDenormalizer"/>
         </service>
@@ -79,7 +74,7 @@
                      method="createObjectExchangeRatesDenormalizer"/>
         </service>
         <service id="ypppa.commission_fees.object_commission_rule_denormalizer"
-                 class="Paysera\Component\Normalization\CoreDenormalizer">
+                 class="Paysera\Component\Normalization\CoreDenormalizer" public="true">
             <factory class="Ypppa\CommissionFees\Normalizer\DenormalizerFactory"
                      method="createObjectCommissionRuleDenormalizer"/>
         </service>
@@ -87,18 +82,36 @@
                  class="Ypppa\CommissionFees\Service\Manager\UserHistoryManager">
         </service>
         <service id="ypppa.commission_fees.commission_rules_provider"
-                 class="Ypppa\CommissionFees\Service\InputDataProvider\CommissionRulesProvider">
+                 class="Ypppa\CommissionFees\Service\InputDataProvider\CommissionRulesProvider" public="true">
             <argument type="service" id="ypppa.commission_fees.commission_rules_parser"/>
             <argument>%commission_fee_rules.file_path%</argument>
         </service>
-        <service id="ypppa.commission_fees.csv_reader" class="Ypppa\CommissionFees\Service\Reader\CsvReader">
+        <service id="ypppa.commission_fees.csv_reader" class="Ypppa\CommissionFees\Service\Reader\CsvReader"
+                 public="true">
         </service>
-        <service id="ypppa.commission_fees.json_reader" class="Ypppa\CommissionFees\Service\Reader\JsonReader">
+        <service id="ypppa.commission_fees.json_reader" class="Ypppa\CommissionFees\Service\Reader\JsonReader"
+                 public="true">
         </service>
         <service id="ypppa.commission_fees.commission_rules_parser"
-                 class="Ypppa\CommissionFees\Service\Parser\CommissionRulesParser">
+                 class="Ypppa\CommissionFees\Service\Parser\CommissionRulesParser" public="true">
             <argument type="service" id="ypppa.commission_fees.json_reader"/>
             <argument type="service" id="ypppa.commission_fees.object_commission_rule_denormalizer"/>
+        </service>
+        <service id="ypppa.commission_fees.csv_operations_parser"
+                 class="Ypppa\CommissionFees\Service\Parser\OperationsParser" public="true">
+            <tag name="operations.parser" key="operations.csv"/>
+            <argument type="service" id="ypppa.commission_fees.csv_reader"/>
+            <argument type="service" id="ypppa.commission_fees.mixed_operation_denormalizer"/>
+        </service>
+        <service id="ypppa.commission_fees.json_operations_parser"
+                 class="Ypppa\CommissionFees\Service\Parser\OperationsParser" public="true">
+            <tag name="operations.parser" key="operations.json"/>
+            <argument type="service" id="ypppa.commission_fees.json_reader"/>
+            <argument type="service" id="ypppa.commission_fees.object_operation_denormalizer"/>
+        </service>
+        <service id="ypppa.commission_fees.parser_resolver"
+                 class="Ypppa\CommissionFees\Service\Parser\ParserResolver" public="true">
+            <argument type="tagged_iterator" tag="operations.parser" index-by="key"/>
         </service>
     </services>
 </container>
