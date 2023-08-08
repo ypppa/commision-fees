@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Ypppa\CommissionFees\Tests\Functional\Command;
 
-use DateTimeImmutable;
 use Psr\Log\NullLogger;
 use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\Console\Tester\CommandTester;
@@ -12,9 +11,6 @@ use Ypppa\CommissionFees\Command\CalculateCommissionFeesCommand;
 use Ypppa\CommissionFees\Exception\CommissionFeeCalculationFailedException;
 use Ypppa\CommissionFees\Exception\InvalidFileFormatException;
 use Ypppa\CommissionFees\Exception\UnsupportedCurrencyException;
-use Ypppa\CommissionFees\Model\ExchangeRate\ExchangeRate;
-use Ypppa\CommissionFees\Model\ExchangeRate\ExchangeRates;
-use Ypppa\CommissionFees\Service\ExchangeRateProvider\MockExchangeRateProvider;
 use Ypppa\CommissionFees\Service\OutputWriter\ConsoleCommissionFeesWriter;
 use Ypppa\CommissionFees\Tests\Functional\AbstractTestCase;
 
@@ -31,19 +27,10 @@ class CalculateCommissionFeesCommandTest extends AbstractTestCase
         parent::setUp();
 
         $logger = new NullLogger();
-        $exchangeRates = (new ExchangeRates())
-            ->setBase('EUR')
-            ->setDate(new DateTimeImmutable('today'))
-            ->addRate(new ExchangeRate('EUR', '1'))
-            ->addRate(new ExchangeRate('JPY', '130.869977'))
-            ->addRate(new ExchangeRate('USD', '1.129031'))
-        ;
-        $exchangeRateProvider = new MockExchangeRateProvider($exchangeRates);
         $this->output = new BufferedOutput();
         $writer = new ConsoleCommissionFeesWriter($this->output);
-
+        $this->container->setParameter('exchange_rates.url', 'tests/_data/exchange_rates.json');
         $this->container->set('ypppa.commission_fees.logger', $logger);
-        $this->container->set('ypppa.commission_fees.url_exchange_rate_provider', $exchangeRateProvider);
         $this->container->set('ypppa.commission_fees.console_commission_fees_writer', $writer);
 
         $this->container->compile();
@@ -82,13 +69,13 @@ class CalculateCommissionFeesCommandTest extends AbstractTestCase
                     '0.06',
                     '1.50',
                     '0',
-                    '0.69',
+                    '0.70',
                     '0.30',
                     '0.30',
                     '3.00',
                     '0.00',
                     '0.00',
-                    '8608',
+                    '8612',
                     '',
                 ]),
             ],

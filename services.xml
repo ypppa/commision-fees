@@ -25,7 +25,7 @@
             <argument>%config.file_path%</argument>
         </service>
         <service id="ypppa.commission_fees.url_exchange_rate_provider"
-                 class="Ypppa\CommissionFees\Service\ExchangeRateProvider\UrlExchangeRateProvider">
+                 class="Ypppa\CommissionFees\Service\ExchangeRateProvider\UrlExchangeRateProvider" public="true">
             <argument type="service" id="ypppa.commission_fees.denormalizer"/>
             <argument>%exchange_rates.url%</argument>
         </service>
