@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace Ypppa\CommissionFees\Functional\Service\Parser;
 
-use DateTimeImmutable;
 use Evp\Component\Money\Money;
 use Exception;
 use Ypppa\CommissionFees\Exception\CommissionFeeCalculationFailedException;
-use Ypppa\CommissionFees\Model\Operation\Operation;
+use Ypppa\CommissionFees\Model\Operation\OperationDto;
+use Ypppa\CommissionFees\Model\Rule\CommissionFeeRule;
 use Ypppa\CommissionFees\Tests\Functional\AbstractTestCase;
 
 /**
  * @codeCoverageIgnore
  */
-class OperationsParserTest extends AbstractTestCase
+class ParserTest extends AbstractTestCase
 {
     public function setUp(): void
     {
@@ -36,25 +36,27 @@ class OperationsParserTest extends AbstractTestCase
         $parser = $this->container->get('ypppa.commission_fees.csv_operations_parser');
         $this->assertEquals(
             $expectedResult,
-            iterator_to_array($parser->parse($filePath))
+            iterator_to_array($parser->parse($filePath, OperationDto::class))
         );
     }
 
     /**
      * @dataProvider parseJsonDataProvider
      *
+     * @param string $serviceId
+     * @param string $className
      * @param string $filePath
      * @param array  $expectedResult
      *
      * @return void
      * @throws Exception
      */
-    public function testParseJson(string $filePath, array $expectedResult): void
+    public function testParseJson(string $serviceId, string $className, string $filePath, array $expectedResult): void
     {
-        $parser = $this->container->get('ypppa.commission_fees.json_operations_parser');
+        $parser = $this->container->get($serviceId);
         $this->assertEquals(
             $expectedResult,
-            iterator_to_array($parser->parse($filePath))
+            iterator_to_array($parser->parse($filePath, $className))
         );
     }
 
@@ -64,19 +66,21 @@ class OperationsParserTest extends AbstractTestCase
             'parser should return an array of Operation' => [
                 'filePath' => 'tests/_data/test_csv_reader.csv',
                 'expectedResult' => [
-                    new Operation(
-                        new DateTimeImmutable('2014-12-31'),
+                    new OperationDto(
+                        '2014-12-31',
                         '4',
                         'private',
                         'withdraw',
-                        new Money('1200.00', 'EUR')
+                        '1200.00',
+                        'EUR'
                     ),
-                    new Operation(
-                        new DateTimeImmutable('2015-01-01'),
+                    new OperationDto(
+                        '2015-01-01',
                         '4',
                         'private',
                         'withdraw',
-                        new Money('1000.00', 'EUR')
+                        '1000.00',
+                        'EUR'
                     ),
                 ],
             ],
@@ -87,22 +91,42 @@ class OperationsParserTest extends AbstractTestCase
     {
         return [
             'parser should return an array of Operation' => [
+                'serviceId' => 'ypppa.commission_fees.json_operations_parser',
+                'className' => OperationDto::class,
                 'filePath' => 'tests/_data/test_json_reader.json',
                 'expectedResult' => [
-                    new Operation(
-                        new DateTimeImmutable('2014-12-31'),
+                    new OperationDto(
+                        '2014-12-31',
                         '4',
                         'private',
                         'withdraw',
-                        new Money('1200.00', 'EUR')
+                        '1200.00',
+                        'EUR'
                     ),
-                    new Operation(
-                        new DateTimeImmutable('2015-01-01'),
+                    new OperationDto(
+                        '2015-01-01',
                         '4',
                         'private',
                         'withdraw',
-                        new Money('1000.00', 'EUR')
+                        '1000.00',
+                        'EUR'
                     ),
+                ],
+            ],
+            'parser should return array of CommissionFeeRule' => [
+                'serviceId' => 'ypppa.commission_fees.commission_rules_parser',
+                'className' => CommissionFeeRule::class,
+                'filePath' => 'tests/_data/test_commission_fee_rules_parser.json',
+                'expectedResult' => [
+                    (new CommissionFeeRule())
+                        ->setOperationType('deposit')
+                        ->setCommission('0.0003'),
+                    (new CommissionFeeRule())
+                        ->setUserType('private')
+                        ->setOperationType('withdraw')
+                        ->setFreeOperationsCountLimit(3)
+                        ->setFreeOperationsAmountLimit(new Money('1000', 'EUR'))
+                        ->setCommission('0.003'),
                 ],
             ],
         ];
@@ -112,7 +136,7 @@ class OperationsParserTest extends AbstractTestCase
     {
         $parser = $this->container->get('ypppa.commission_fees.csv_operations_parser');
         $this->expectException(CommissionFeeCalculationFailedException::class);
-        $generator = $parser->parse('');
+        $generator = $parser->parse('', OperationDto::class);
         $generator->next();
     }
 }

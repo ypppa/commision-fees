@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ypppa\CommissionFees\Service\ExchangeRateProvider;
 
 use Paysera\Component\Normalization\CoreDenormalizer;
+use Paysera\Component\Normalization\DenormalizationContext;
 use Throwable;
 use Ypppa\CommissionFees\Exception\ExchangeRatesLoadException;
 use Ypppa\CommissionFees\Exception\RateNotFoundException;
@@ -31,7 +32,11 @@ class UrlExchangeRateProvider implements ExchangeRateProviderInterface
     {
         try {
             $data = file_get_contents($this->url);
-            $this->exchangeRates = $this->denormalizer->denormalize(json_decode($data), ExchangeRates::class);
+            $this->exchangeRates = $this->denormalizer->denormalize(
+                json_decode($data),
+                ExchangeRates::class,
+                new DenormalizationContext($this->denormalizer, 'object')
+            );
         } catch (Throwable $exception) {
             throw new ExchangeRatesLoadException($exception);
         }

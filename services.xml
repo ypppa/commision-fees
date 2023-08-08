@@ -21,12 +21,12 @@
         <service id="ypppa.commission_fees.yaml_configuration_provider"
                  class="Ypppa\CommissionFees\Service\InputDataProvider\YamlConfigurationProvider" public="true">
             <argument type="service" id="ypppa.commission_fees.validator"/>
-            <argument type="service" id="ypppa.commission_fees.mixed_config_denormalizer"/>
+            <argument type="service" id="ypppa.commission_fees.denormalizer"/>
             <argument>%config.file_path%</argument>
         </service>
         <service id="ypppa.commission_fees.url_exchange_rate_provider"
                  class="Ypppa\CommissionFees\Service\ExchangeRateProvider\UrlExchangeRateProvider">
-            <argument type="service" id="ypppa.commission_fees.object_exchange_rates_denormalizer"/>
+            <argument type="service" id="ypppa.commission_fees.denormalizer"/>
             <argument>%exchange_rates.url%</argument>
         </service>
         <service id="ypppa.commission_fees.currency_converter"
@@ -51,32 +51,12 @@
             <argument type="service" id="ypppa.commission_fees.parser_resolver"/>
             <argument type="service" id="ypppa.commission_fees.commission_fee_calculator"/>
             <argument type="service" id="ypppa.commission_fees.console_commission_fees_writer"/>
-            <argument type="service" id="ypppa.commission_fees.validator"/>
+            <argument type="service" id="ypppa.commission_fees.operation_manager"/>
         </service>
-        <service id="ypppa.commission_fees.mixed_config_denormalizer"
+        <service id="ypppa.commission_fees.denormalizer"
                  class="Paysera\Component\Normalization\CoreDenormalizer">
             <factory class="Ypppa\CommissionFees\Normalizer\DenormalizerFactory"
-                     method="createMixedConfigDenormalizer"/>
-        </service>
-        <service id="ypppa.commission_fees.mixed_operation_denormalizer"
-                 class="Paysera\Component\Normalization\CoreDenormalizer" public="true">
-            <factory class="Ypppa\CommissionFees\Normalizer\DenormalizerFactory"
-                     method="createMixedOperationDenormalizer"/>
-        </service>
-        <service id="ypppa.commission_fees.object_operation_denormalizer"
-                 class="Paysera\Component\Normalization\CoreDenormalizer" public="true">
-            <factory class="Ypppa\CommissionFees\Normalizer\DenormalizerFactory"
-                     method="createObjectOperationDenormalizer"/>
-        </service>
-        <service id="ypppa.commission_fees.object_exchange_rates_denormalizer"
-                 class="Paysera\Component\Normalization\CoreDenormalizer">
-            <factory class="Ypppa\CommissionFees\Normalizer\DenormalizerFactory"
-                     method="createObjectExchangeRatesDenormalizer"/>
-        </service>
-        <service id="ypppa.commission_fees.object_commission_rule_denormalizer"
-                 class="Paysera\Component\Normalization\CoreDenormalizer" public="true">
-            <factory class="Ypppa\CommissionFees\Normalizer\DenormalizerFactory"
-                     method="createObjectCommissionRuleDenormalizer"/>
+                     method="createDenormalizer"/>
         </service>
         <service id="ypppa.commission_fees.user_history_manager"
                  class="Ypppa\CommissionFees\Service\Manager\UserHistoryManager">
@@ -93,25 +73,45 @@
                  public="true">
         </service>
         <service id="ypppa.commission_fees.commission_rules_parser"
-                 class="Ypppa\CommissionFees\Service\Parser\CommissionRulesParser" public="true">
+                 class="Ypppa\CommissionFees\Service\Parser\Parser" public="true">
             <argument type="service" id="ypppa.commission_fees.json_reader"/>
-            <argument type="service" id="ypppa.commission_fees.object_commission_rule_denormalizer"/>
+            <argument type="service" id="ypppa.commission_fees.validator"/>
+            <argument type="service" id="ypppa.commission_fees.denormalizer"/>
+            <argument type="service" id="ypppa.commission_fees.object_denormalization_context"/>
         </service>
         <service id="ypppa.commission_fees.csv_operations_parser"
-                 class="Ypppa\CommissionFees\Service\Parser\OperationsParser" public="true">
+                 class="Ypppa\CommissionFees\Service\Parser\Parser" public="true">
             <tag name="operations.parser" key="operations.csv"/>
             <argument type="service" id="ypppa.commission_fees.csv_reader"/>
-            <argument type="service" id="ypppa.commission_fees.mixed_operation_denormalizer"/>
+            <argument type="service" id="ypppa.commission_fees.validator"/>
+            <argument type="service" id="ypppa.commission_fees.denormalizer"/>
+            <argument type="service" id="ypppa.commission_fees.mixed_denormalization_context"/>
         </service>
         <service id="ypppa.commission_fees.json_operations_parser"
-                 class="Ypppa\CommissionFees\Service\Parser\OperationsParser" public="true">
+                 class="Ypppa\CommissionFees\Service\Parser\Parser" public="true">
             <tag name="operations.parser" key="operations.json"/>
             <argument type="service" id="ypppa.commission_fees.json_reader"/>
-            <argument type="service" id="ypppa.commission_fees.object_operation_denormalizer"/>
+            <argument type="service" id="ypppa.commission_fees.validator"/>
+            <argument type="service" id="ypppa.commission_fees.denormalizer"/>
+            <argument type="service" id="ypppa.commission_fees.object_denormalization_context"/>
         </service>
         <service id="ypppa.commission_fees.parser_resolver"
                  class="Ypppa\CommissionFees\Service\Parser\ParserResolver" public="true">
             <argument type="tagged_iterator" tag="operations.parser" index-by="key"/>
+        </service>
+        <service id="ypppa.commission_fees.operation_manager"
+                 class="Ypppa\CommissionFees\Service\Manager\OperationManager">
+            <argument type="service" id="ypppa.commission_fees.validator"/>
+        </service>
+        <service id="ypppa.commission_fees.mixed_denormalization_context"
+                 class="Paysera\Component\Normalization\DenormalizationContext">
+            <argument type="service" id="ypppa.commission_fees.denormalizer"/>
+            <argument>mixed</argument>
+        </service>
+        <service id="ypppa.commission_fees.object_denormalization_context"
+                 class="Paysera\Component\Normalization\DenormalizationContext">
+            <argument type="service" id="ypppa.commission_fees.denormalizer"/>
+            <argument>object</argument>
         </service>
     </services>
 </container>

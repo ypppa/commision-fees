@@ -8,5 +8,5 @@ use Generator;
 
 interface ParserInterface
 {
-    public function parse(string $filePath): Generator;
+    public function parse(string $filePath, string $className): Generator;
 }

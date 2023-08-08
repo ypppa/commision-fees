@@ -50,7 +50,7 @@ class CommissionRulesProvider implements CommissionRulesProviderInterface
     private function load(): void
     {
         try {
-            $this->rules = iterator_to_array($this->parser->parse($this->filePath));
+            $this->rules = iterator_to_array($this->parser->parse($this->filePath, CommissionFeeRule::class));
         } catch (Throwable $exception) {
             throw new CommissionRulesLoadException($exception);
         }

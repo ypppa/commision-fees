@@ -9,43 +9,14 @@ use Paysera\Component\Normalization\Registry\GroupedNormalizerRegistryProvider;
 
 class DenormalizerFactory
 {
-    public static function createMixedConfigDenormalizer(): CoreDenormalizer
+    public static function createDenormalizer(): CoreDenormalizer
     {
         $provider = new GroupedNormalizerRegistryProvider();
-        $provider->addTypeAwareNormalizer(new MixedConfigNormalizer());
-        $provider->addTypeAwareNormalizer(new MixedMoneyNormalizer());
-
-        return new CoreDenormalizer($provider);
-    }
-
-    public static function createObjectExchangeRatesDenormalizer(): CoreDenormalizer
-    {
-        $provider = new GroupedNormalizerRegistryProvider();
-        $provider->addTypeAwareNormalizer(new ObjectExchangeRatesNormalizer());
-
-        return new CoreDenormalizer($provider);
-    }
-
-    public static function createMixedOperationDenormalizer(): CoreDenormalizer
-    {
-        $provider = new GroupedNormalizerRegistryProvider();
-        $provider->addTypeAwareNormalizer(new MixedOperationNormalizer());
-
-        return new CoreDenormalizer($provider);
-    }
-
-    public static function createObjectOperationDenormalizer(): CoreDenormalizer
-    {
-        $provider = new GroupedNormalizerRegistryProvider();
-        $provider->addTypeAwareNormalizer(new ObjectOperationNormalizer());
-
-        return new CoreDenormalizer($provider);
-    }
-
-    public static function createObjectCommissionRuleDenormalizer(): CoreDenormalizer
-    {
-        $provider = new GroupedNormalizerRegistryProvider();
-        $provider->addTypeAwareNormalizer(new ObjectCommissionRuleNormalizer());
+        $provider->addTypeAwareNormalizer(new MixedOperationDtoNormalizer(), 'mixed');
+        $provider->addTypeAwareNormalizer(new ObjectOperationDtoNormalizer(), 'object');
+        $provider->addTypeAwareNormalizer(new ObjectCommissionRuleNormalizer(), 'object');
+        $provider->addTypeAwareNormalizer(new ObjectExchangeRatesNormalizer(), 'object');
+        $provider->addTypeAwareNormalizer(new MixedConfigNormalizer(), 'mixed');
 
         return new CoreDenormalizer($provider);
     }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ypppa\CommissionFees\Service\InputDataProvider;
 
 use Paysera\Component\Normalization\CoreDenormalizer;
+use Paysera\Component\Normalization\DenormalizationContext;
 use Symfony\Component\Validator\Exception\ValidationFailedException;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Component\Yaml\Yaml;
@@ -35,7 +36,11 @@ class YamlConfigurationProvider implements ConfigurationProviderInterface
     {
         try {
             $configuration = Yaml::parseFile($this->filePath);
-            $this->config = $this->denormalizer->denormalize($configuration, Config::class);
+            $this->config = $this->denormalizer->denormalize(
+                $configuration,
+                Config::class,
+                new DenormalizationContext($this->denormalizer, 'mixed')
+            );
             $violations = $this->validator->validate($this->config);
             if ($violations->count() > 0) {
                 throw new ValidationFailedException($this->config, $violations);

@@ -4,43 +4,39 @@ declare(strict_types=1);
 
 namespace Ypppa\CommissionFees\Model\Operation;
 
-use DateTimeImmutable;
-use Evp\Component\Money\Money;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Mapping\ClassMetadata;
 
-class Operation
+class OperationDto
 {
-    public const USER_TYPE_PRIVATE = 'private';
-    public const USER_TYPE_BUSINESS = 'business';
-    public const OPERATION_TYPE_DEPOSIT = 'deposit';
-    public const OPERATION_TYPE_WITHDRAW = 'withdraw';
-
-    private DateTimeImmutable $date;
-    private string $userId;
-    private string $userType;
-    private string $operationType;
-    private Money $operationAmount;
+    private ?string $operationDate;
+    private ?string $userId;
+    private ?string $userType;
+    private ?string $operationType;
+    private ?string $amount;
+    private ?string $currency;
 
     public function __construct(
-        DateTimeImmutable $date,
-        string $userId,
-        string $userType,
-        string $operationType,
-        Money $operationAmount,
+        ?string $operationDate,
+        ?string $userId,
+        ?string $userType,
+        ?string $operationType,
+        ?string $amount,
+        ?string $currency
     ) {
-        $this->date = $date;
+        $this->operationDate = $operationDate;
         $this->userId = $userId;
         $this->userType = $userType;
         $this->operationType = $operationType;
-        $this->operationAmount = $operationAmount;
+        $this->amount = $amount;
+        $this->currency = $currency;
     }
 
     public static function loadValidatorMetadata(ClassMetadata $metadata): void
     {
         $metadata
             ->addPropertyConstraint(
-                'date',
+                'operationDate',
                 new Assert\NotBlank(null, 'date field is required')
             )
             ->addPropertyConstraint(
@@ -55,8 +51,8 @@ class Operation
                 'userType',
                 new Assert\Choice(
                     [
-                        self::USER_TYPE_PRIVATE,
-                        self::USER_TYPE_BUSINESS,
+                        Operation::USER_TYPE_PRIVATE,
+                        Operation::USER_TYPE_BUSINESS,
                     ],
                     null, null, null, null, null, null,
                     'userType is invalid'
@@ -70,42 +66,51 @@ class Operation
                 'operationType',
                 new Assert\Choice(
                     [
-                        self::OPERATION_TYPE_DEPOSIT,
-                        self::OPERATION_TYPE_WITHDRAW,
+                        Operation::OPERATION_TYPE_DEPOSIT,
+                        Operation::OPERATION_TYPE_WITHDRAW,
                     ],
                     null, null, null, null, null, null,
                     'operationType is invalid'
                 )
             )
             ->addPropertyConstraint(
-                'operationAmount',
-                new Assert\NotBlank(null, 'operationAmount field is required')
+                'amount',
+                new Assert\NotBlank(null, 'amount field is required')
+            )
+            ->addPropertyConstraint(
+                'currency',
+                new Assert\NotBlank(null, 'currency field is required')
             )
         ;
     }
 
-    public function getDate(): DateTimeImmutable
+    public function getOperationDate(): ?string
     {
-        return $this->date;
+        return $this->operationDate;
     }
 
-    public function getUserId(): string
+    public function getUserId(): ?string
     {
         return $this->userId;
     }
 
-    public function getUserType(): string
+    public function getUserType(): ?string
     {
         return $this->userType;
     }
 
-    public function getOperationType(): string
+    public function getOperationType(): ?string
     {
         return $this->operationType;
     }
 
-    public function getOperationAmount(): Money
+    public function getAmount(): ?string
     {
-        return $this->operationAmount;
+        return $this->amount;
+    }
+
+    public function getCurrency(): ?string
+    {
+        return $this->currency;
     }
 }

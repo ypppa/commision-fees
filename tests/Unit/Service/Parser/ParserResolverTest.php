@@ -8,6 +8,9 @@ use PHPUnit\Framework\TestCase;
 use Ypppa\CommissionFees\Service\Parser\ParserInterface;
 use Ypppa\CommissionFees\Service\Parser\ParserResolver;
 
+/**
+ * @codeCoverageIgnore
+ */
 class ParserResolverTest extends TestCase
 {
     /**

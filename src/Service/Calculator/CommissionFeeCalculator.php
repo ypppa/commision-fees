@@ -56,8 +56,6 @@ class CommissionFeeCalculator
             $commissionFee = $this->minFeeCheck($rule, $commissionFee);
             $commissionFee = $this->maxFeeCheck($rule, $commissionFee);
 
-            $operation->setCommissionFee($commissionFee);
-
             if ($rule->getFreeOperationsCountLimit() !== null || $rule->getFreeOperationsAmountLimit() !== null) {
                 $userCumulativeOperations->add($convertedAmount);
             }

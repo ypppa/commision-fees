@@ -9,11 +9,10 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Validator\Exception\ValidationFailedException;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Ypppa\CommissionFees\Exception\CommissionFeeCalculationFailedException;
-use Ypppa\CommissionFees\Exception\ValidationException;
+use Ypppa\CommissionFees\Model\Operation\OperationDto;
 use Ypppa\CommissionFees\Service\Calculator\CommissionFeeCalculator;
+use Ypppa\CommissionFees\Service\Manager\OperationManager;
 use Ypppa\CommissionFees\Service\OutputWriter\CommissionFeesWriterInterface;
 use Ypppa\CommissionFees\Service\Parser\ParserResolver;
 
@@ -25,14 +24,14 @@ class CalculateCommissionFeesCommand extends Command
     private ParserResolver $parserResolver;
     private CommissionFeeCalculator $calculator;
     private CommissionFeesWriterInterface $outputWriter;
-    private ValidatorInterface $validator;
+    private OperationManager $operationManager;
 
     public function __construct(
         LoggerInterface $logger,
         ParserResolver $parserResolver,
         CommissionFeeCalculator $calculator,
         CommissionFeesWriterInterface $outputWriter,
-        ValidatorInterface $validator
+        OperationManager $operationManager
     ) {
 
         parent::__construct();
@@ -40,7 +39,7 @@ class CalculateCommissionFeesCommand extends Command
         $this->parserResolver = $parserResolver;
         $this->calculator = $calculator;
         $this->outputWriter = $outputWriter;
-        $this->validator = $validator;
+        $this->operationManager = $operationManager;
     }
 
     protected function configure(): void
@@ -61,13 +60,8 @@ class CalculateCommissionFeesCommand extends Command
             if ($parser === null) {
                 throw new CommissionFeeCalculationFailedException('', null, null);
             }
-            foreach ($parser->parse($filePath) as $operation) {
-
-                $violations = $this->validator->validate($operation);
-                if ($violations->count() > 0) {
-                    throw new ValidationException(new ValidationFailedException($operation, $violations));
-                }
-
+            foreach ($parser->parse($filePath, OperationDto::class) as $operationDto) {
+                $operation = $this->operationManager->createFromDto($operationDto);
                 $commissionFee = $this->calculator->calculate($operation);
 
                 $this->outputWriter->write($commissionFee);
